@@ -1,0 +1,16 @@
+  UW PICO 5.09                                                                                     File: .gitignore                                                                                       
+
+
+# other files
+test.ipynb
+test2.csv   
+testing_plots.ipynb
+reward_distribution.pdf
+plot.ipynb
+test.csv
+plot.png
+metrics/*.csv 
+*.csv
+*.png
+*.pdf
+relela_results/
