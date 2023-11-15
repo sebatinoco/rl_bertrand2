@@ -73,7 +73,7 @@ class SACAgent:
   
     def __init__(self, dim_states, dim_actions, moving_dim = 10_000, max_var = 0.2, hidden_size = 256, 
                  gamma = 0.99, tau = 0.01, alpha = 0.2, Q_lr = 3e-4, actor_lr = 3e-4, alpha_lr = 3e-4, clip = 5,
-                 beta = 2e-5, use_epsilon_greedy = True):
+                 beta = 2e-5, use_epsilon_greedy = False):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         self.obs_dim = dim_states

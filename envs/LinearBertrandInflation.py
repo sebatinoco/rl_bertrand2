@@ -30,7 +30,8 @@ class Scaler:
 
 class LinearBertrandEnv():
     def __init__(self, N, k, rho, timesteps, A = 3, e = 1, c = 1, v = 3, xi = 0.2, 
-                 inflation_start = 0, use_moving_avg = True, moving_dim = 1000, max_var = 2.0):
+                 inflation_start = 0, use_moving_avg = True, moving_dim = 1000, max_var = 2.0,
+                 discrete_actions = False):
         
         self.N = N # number of agents
         self.k = k # past periods to observe
@@ -45,6 +46,7 @@ class LinearBertrandEnv():
         self.inflation_start = inflation_start # steps to begin with inflation
         self.trigger_deviation = False # trigger deviation
         self.altruist = False # altruist actions
+        self.discrete_actions = discrete_actions # discrete or continuous actions
         
         assert v >= k, 'v must be greater or equal than k'
         
@@ -70,7 +72,7 @@ class LinearBertrandEnv():
             action[0] = self.pN
             
         if self.altruist:
-            action[0] = self.pN
+            action[0] = self.pN + (self.pM - self.pN) / 20
         
         # compute quantities
         quantities = self.demand(action, self.A_t)
@@ -87,6 +89,8 @@ class LinearBertrandEnv():
         inflation = self.get_inflation()
         self.inflation_history.append(inflation)
         
+        
+        # sacar
         action = np.array(action, ndmin = 2)
         self.scaled_history = np.concatenate((self.scaled_history, action), axis = 0)
         new_mean = np.mean(self.scaled_history[self.idx+1:self.idx+self.moving_dim+1, :], axis = 0)
@@ -98,13 +102,13 @@ class LinearBertrandEnv():
         inflation = np.array(inflation, ndmin = 2, dtype = 'float32')
         cost = np.array(self.c_t, ndmin = 2, dtype = 'float32')
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
-        past_inflation = np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T
+        past_inflation = np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T # sacar
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
-        moving_avg = np.array(self.moving_avg, ndmin = 2, dtype = 'float32')
+        moving_avg = np.array(self.moving_avg, ndmin = 2, dtype = 'float32') # sacar
         
         past_prices = past_prices - past_costs
         
-        #ob_t1 = (inflation, cost, past_prices, past_inflation, past_costs, moving_avg)
+        #ob_t1 = (inflation, cost, past_prices, past_inflation, past_costs, moving_avg) # sacar
         ob_t1 = (cost, past_prices, past_costs)
         ob_t1 = np.concatenate([element.flatten() for element in ob_t1])
         ob_t1 = self.obs_scaler.transform(ob_t1)
@@ -279,15 +283,18 @@ class LinearBertrandEnv():
     
     def rescale_action(self, action, agent_idx):
         
-        action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
-        
-        if self.use_moving_avg:
-            #scaled_action = np.max([self.moving_avg[agent_idx] * (1 + action), 0.0]) # scale action
-            scaled_action = np.max([action * self.c_t, 0.0]) # variations over cost
+        if self.discrete_actions:
+            action = 1
         else:
-            scaled_action = action
-        
-        return scaled_action + self.c_t
+            action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
+            
+            if self.use_moving_avg:
+                #scaled_action = np.max([self.moving_avg[agent_idx] * (1 + action), 0.0]) # scale action
+                scaled_action = np.max([action * self.c_t, 0.0]) # variations over cost
+            else:
+                scaled_action = action
+            
+            return scaled_action + self.c_t
     
     def get_metric(self, rewards, window = 1000):
         

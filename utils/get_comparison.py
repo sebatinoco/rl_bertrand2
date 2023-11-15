@@ -26,6 +26,12 @@ def get_label(file, parameter):
 def get_comparison(window_size = 1000, metrics_folder = 'metrics'):
 
     metrics = os.listdir(f'{metrics_folder}/')
+    
+    colors = {
+        0: 'C0',
+        1: 'C1',
+        2: 'C4'
+    }
 
     envs = ['bertrand', 'linear']
     parameters = ['N', 'gamma', 'rho', 'lr', 'k']
@@ -46,21 +52,41 @@ def get_comparison(window_size = 1000, metrics_folder = 'metrics'):
                                             (('deviate' not in metric) and ('altruist' not in metric)) or 
                                         ('base' in metric and 'deviate' not in metric and 'altruist' not in metric)])
 
-                plt.figure(figsize = (12, 4))
+                plt.figure(figsize = (8, 4))
+                count = 0
                 for file in final_metrics:
                     delta_serie = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')['delta']#[-10000:]
-                    #delta_serie = get_rolling(delta_serie, window_size)
                     delta_avg = get_rolling(delta_serie, window_size)
-                    delta_std = get_rolling_std(delta_serie, window_size)
-                    series_size = len(delta_avg)
-                    plt.errorbar(range(series_size), delta_avg, delta_std, errorevery=int(0.01 * series_size), label = get_label(file, parameter))
-                    #plt.plot(delta_serie, label = get_label(file, parameter))
-                plt.plot([1 for i in range(delta_serie.shape[0])], label = 'Monopoly profits', color = 'red')
-                plt.plot([0 for i in range(delta_serie.shape[0])], label = 'Nash profits', color = 'green')
+                    #delta_std = get_rolling_std(delta_serie, window_size)
+                    #series_size = len(delta_avg)
+                    #plt.errorbar(range(series_size), delta_avg, delta_std, errorevery=int(0.01 * series_size), label = get_label(file, parameter))
+                    plt.plot(delta_avg, label = get_label(file, parameter), color = colors[count])
+                    count += 1
+                plt.plot([1 for i in range(delta_serie.shape[0])], label = 'Monopoly', color = 'red')
+                plt.plot([0 for i in range(delta_serie.shape[0])], label = 'Nash', color = 'green')
                 #plt.axhline(1, label = 'Monopoly profits', color = 'red')
                 #plt.axhline(0, label = 'Nash profits', color = 'green')
                 plt.xlabel('Timesteps')
                 plt.ylabel('Delta')
-                plt.legend()
-                plt.savefig(f'figures/agg_experiments/{env}_{parameter}' + trigger_name + '.pdf')
+                plt.legend(loc = 'upper right')
+                plt.savefig(f'figures/agg_experiments/{env}_{parameter}_delta' + trigger_name + '.pdf')
+                plt.close()
+                
+                plt.figure(figsize = (8, 4))
+                count = 0
+                for file in final_metrics:
+                    df_prices = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')
+                    price_cols = [col for col in df_prices.columns if 'prices' in col]
+                    prices_avg = get_rolling(df_prices[price_cols].mean(axis = 1), window_size)
+                    #plt.errorbar(range(series_size), delta_avg, delta_std, errorevery=int(0.01 * series_size), label = get_label(file, parameter))
+                    plt.plot(prices_avg, label = get_label(file, parameter), color = colors[count])
+                    count += 1
+                plt.plot(df_prices['p_monopoly'], color = 'red', label = 'Monopoly')
+                plt.plot(df_prices['p_nash'], color = 'green', label = 'Nash')
+                #plt.axhline(1, label = 'Monopoly profits', color = 'red')
+                #plt.axhline(0, label = 'Nash profits', color = 'green')
+                plt.xlabel('Timesteps')
+                plt.ylabel('Prices')
+                plt.legend(loc = 'lower right')
+                plt.savefig(f'figures/agg_experiments/{env}_{parameter}_prices' + trigger_name + '.pdf')
                 plt.close()

@@ -143,7 +143,7 @@ class BertrandEnv():
         inflation = self.get_inflation()
         self.inflation_history.append(inflation)
         
-        # adjust moving avg
+        # adjust moving avg -- sacar
         action = np.array(action, ndmin = 2)
         self.scaled_history = np.concatenate((self.scaled_history, action), axis = 0)
         new_mean = np.mean(self.scaled_history[self.idx+1:self.idx+self.moving_dim+1, :], axis = 0)

@@ -26,7 +26,7 @@ def get_rolling_std(series, window_size):
 
     return rolling_std
 
-def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics'):
+def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize = (8, 4)):
 
     ###########################################
     df_plot = pd.read_csv(f'{metrics_folder}/{exp_name}.csv', sep = ';', encoding = 'utf-8-sig')
@@ -54,47 +54,47 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics'):
     series_size = df_avg.shape[0]
         
     ############################################
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = figsize)
     for agent in range(n_agents):
         serie = f'prices_{agent}'
         plt.errorbar(range(series_size), df_avg[serie], df_std[serie], errorevery=int(0.01 * series_size), label = f'Agent {agent}')
-    plt.plot(df_plot['p_monopoly'], color = 'red', label = 'Monopoly price')
-    plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash price')
+    plt.plot(df_plot['p_monopoly'], color = 'red', label = 'Monopoly')
+    plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')
-    plt.legend()
+    plt.legend(loc = 'upper right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_prices.pdf')
     plt.close()
     
     ############################################
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['avg_prices'], df_std['avg_prices'], errorevery=int(0.01 * series_size), label = f'Average prices')
-    plt.plot(df_plot['p_monopoly'], color = 'red', label = 'Monopoly price')
-    plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash price')
+    plt.plot(df_plot['p_monopoly'], color = 'red', label = 'Monopoly')
+    plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')
-    plt.legend()
+    plt.legend(loc = 'upper right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_avg_prices.pdf')
     plt.close()
     
     ############################################
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['avg_rewards'], df_std['avg_rewards'], errorevery=int(0.01 * series_size), label = f'Average profits')
-    plt.plot(df_plot['pi_N'], label = 'Nash profits', color = 'green')
-    plt.plot(df_plot['pi_M'], label = 'Monopoly profits', color = 'red')
+    plt.plot(df_plot['pi_N'], label = 'Nash', color = 'green')
+    plt.plot(df_plot['pi_M'], label = 'Monopoly', color = 'red')
     plt.xlabel('Timesteps')
     plt.ylabel('Profits')
-    plt.legend()
+    plt.legend(loc = 'upper right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_rewards.pdf')
     plt.close()
     
     ############################################
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['delta'], df_std['delta'], errorevery=int(0.01 * series_size), label = f'Average profits')
-    plt.axhline(1, color = 'red', label = 'Nash profits')
-    plt.axhline(0, color = 'green', label = 'Monoply profits')
+    plt.axhline(1, color = 'red', label = 'Nash')
+    plt.axhline(0, color = 'green', label = 'Monoply')
     plt.xlabel('Timesteps')
     plt.ylabel('Delta')
-    plt.legend()
+    plt.legend(loc = 'upper right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_delta.pdf')
     plt.close()
