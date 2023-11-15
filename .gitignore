@@ -221,4 +221,5 @@ metrics/*.csv
 *.csv
 *.png
 *.pdf
+*.txt
 relela_results/
