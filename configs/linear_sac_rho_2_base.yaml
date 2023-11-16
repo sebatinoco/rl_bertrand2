@@ -1,4 +1,4 @@
-exp_name: sac
+exp_name: sac_rho_2
 model: sac
 env_name: linear
 use_lstm: False
@@ -9,7 +9,7 @@ env: # environment params
   N: 2
   k: 1
   v: 3
-  rho: 0.0002
+  rho: 0.0005
   xi: 0.2
   inflation_start: 0
 

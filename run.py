@@ -51,46 +51,39 @@ if __name__ == '__main__':
             start_time = time.time()
             # load config
             for config in configs:
-                #for trigger_deviation in [True, False, 'altruist']:
-                for trigger_deviation in ['altruist']:
-                    trigger_name = ''
-                    if trigger_deviation == True:
-                        trigger_name = '_deviate'
-                    elif trigger_deviation == 'altruist':
-                        trigger_name = '_altruist'
-                    
-                    with open(f"configs/{config}", 'r') as file:
-                        args = yaml.safe_load(file)
-                        agent_args = args['agent']
-                        env_args = args['env']
-                        buffer_args = args['buffer']
-                        train_args = args['train']
+                with open(f"configs/{config}", 'r') as file:
+                    args = yaml.safe_load(file)
+                    agent_args = args['agent']
+                    env_args = args['env']
+                    buffer_args = args['buffer']
+                    train_args = args['train']
+                    variation = args['variation']
 
-                    train_args['timesteps'] = 150_000
-                    train_args['episodes'] = 1
+                train_args['timesteps'] = 500
+                train_args['episodes'] = 1
 
-                    # set experiment name
-                    exp_name = f"{args['env_name']}_{args['exp_name']}_{experiment_idx}" + trigger_name
-                    
-                    # load model
-                    model = models_dict[args['model']] 
-                    
-                    # load environment, agent and buffer
-                    env = envs_dict[args['env_name']]
-                    #env = envs_dict['bertrand']
-                    env = env(**env_args, timesteps = train_args['timesteps'])      
+                # set experiment name
+                exp_name = f"{args['env_name']}_{args['exp_name']}_{variation}_{experiment_idx}"
+                
+                # load model
+                model = models_dict[args['model']] 
+                
+                # load environment, agent and buffer
+                env = envs_dict[args['env_name']]
+                #env = envs_dict['bertrand']
+                env = env(**env_args, timesteps = train_args['timesteps'])      
 
-                    dim_states = (env.N * env.k) + env.k + 1
-                    dim_actions = args['n_actions'] if args['model'] == 'dqn' else 1
-                    
-                    agents = [model(dim_states, dim_actions, **agent_args) for _ in range(env.N)]
-                    buffer = ReplayBuffer(dim_states = dim_states, N = env.N, **buffer_args)
-                    
-                    # train
-                    try:
-                        train(env, agents, buffer, env.N, exp_name = exp_name, trigger_deviation = trigger_deviation, **train_args)
-                    except:
-                        failed_experiments.append(exp_name)
+                dim_states = (env.N * env.k) + env.k + 1
+                dim_actions = args['n_actions'] if args['model'] == 'dqn' else 1
+                
+                agents = [model(dim_states, dim_actions, **agent_args) for _ in range(env.N)]
+                buffer = ReplayBuffer(dim_states = dim_states, N = env.N, **buffer_args)
+                
+                # train
+                try:
+                    train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, **train_args)
+                except:
+                    failed_experiments.append(exp_name)
                 
             execution_time = time.time() - start_time
 
@@ -102,9 +95,9 @@ if __name__ == '__main__':
     
     # plot
     for metric in metrics:
-        get_plots(metric, window_size = window_size, metrics_folder=metrics_folder)
+        get_plots(metric, window_size = window_size, metrics_folder = metrics_folder)
         
-    get_comparison(window_size = window_size, metrics_folder=metrics_folder)
+    get_comparison(window_size = window_size, metrics_folder = metrics_folder)
     get_table()
         
     folder_size_mb = get_folder_size('./metrics')

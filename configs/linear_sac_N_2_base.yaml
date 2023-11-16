@@ -1,11 +1,12 @@
-exp_name: sac_lr_1
+exp_name: sac_N_2
 model: sac
-env_name: bertrand
+env_name: linear
 use_lstm: False
 n_actions: 1
+variation: base
 
 env: # environment params
-  N: 2
+  N: 10
   k: 1
   v: 3
   rho: 0.0002
@@ -13,9 +14,9 @@ env: # environment params
   inflation_start: 0
 
 agent: # agent params
-  actor_lr: 0.0005
-  Q_lr: 0.0005
-  alpha_lr: 0.0005
+  actor_lr: 0.0001
+  Q_lr: 0.0001
+  alpha_lr: 0.0001
   gamma: 0.95
   tau: 0.01
   hidden_size: 256

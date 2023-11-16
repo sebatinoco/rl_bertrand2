@@ -1,13 +1,14 @@
-exp_name: sac_k_2
+exp_name: sac_base
 model: sac
-env_name: bertrand
+env_name: linear
 use_lstm: False
 n_actions: 1
+variation: deviate
 
 env: # environment params
   N: 2
-  k: 25
-  v: 30
+  k: 1
+  v: 3
   rho: 0.0002
   xi: 0.2
   inflation_start: 0

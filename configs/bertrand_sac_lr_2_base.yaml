@@ -1,21 +1,22 @@
-exp_name: sac_rho_2
+exp_name: sac_lr_2
 model: sac
 env_name: bertrand
 use_lstm: False
 n_actions: 1
+variation: base
 
 env: # environment params
   N: 2
   k: 1
   v: 3
-  rho: 0.0005
+  rho: 0.0002
   xi: 0.2
   inflation_start: 0
 
 agent: # agent params
-  actor_lr: 0.0001
-  Q_lr: 0.0001
-  alpha_lr: 0.0001
+  actor_lr: 0.001
+  Q_lr: 0.001
+  alpha_lr: 0.001
   gamma: 0.95
   tau: 0.01
   hidden_size: 256
