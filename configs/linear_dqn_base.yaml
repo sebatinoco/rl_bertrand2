@@ -1,0 +1,30 @@
+exp_name: dqn
+model: dqn
+env_name: linear
+use_lstm: False
+n_actions: 15
+variation: base
+
+env: # environment params
+  N: 2
+  k: 1
+  v: 3
+  rho: 0.0002
+  xi: 0.2
+  inflation_start: 0
+
+agent: # agent params
+  lr: 0.1
+  gamma: 0.95
+  hidden_size: 256
+
+buffer: # buffer params
+  sample_size: 512
+  buffer_size: 100_000
+
+train: # train params
+  episodes: 1
+  timesteps: 200_000
+  update_steps: 1
+  deviate_start: 0.85
+  deviate_end: 0.95

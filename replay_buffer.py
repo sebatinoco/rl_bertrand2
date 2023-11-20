@@ -44,9 +44,9 @@ class ReplayBuffer():
         else:
             sample_idxs = np.random.randint(0, self.sample_size, size = self.sample_size)
         
-        return (self.buffer_st[sample_idxs], 
-                self.buffer_at[sample_idxs][:, idx],
-                self.buffer_rt[sample_idxs][:, idx],
-                self.buffer_st1[sample_idxs],
-                self.buffer_done[sample_idxs],
+        return (self.buffer_st[sample_idxs], # states
+                self.buffer_at[sample_idxs][:, idx], # actions
+                self.buffer_rt[sample_idxs][:, idx], # rewards
+                self.buffer_st1[sample_idxs], # states_t1
+                self.buffer_done[sample_idxs], # done
                 )

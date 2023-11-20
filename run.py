@@ -28,6 +28,7 @@ if __name__ == '__main__':
     
     train_agents = r_args['train_agents']
     filter_env = r_args['env']
+    filter_model = r_args['model']
     filter_config = r_args['filter_config']
     nb_experiments = r_args['nb_experiments']
     window_size = r_args['window_size']
@@ -37,11 +38,12 @@ if __name__ == '__main__':
     
     if train_agents:
         # filter configs if specified
-        if filter_env or filter_config:
+        if filter_env or filter_model or filter_config:
             env_configs = [config for config in configs if len(set(filter_env) & set(config.split('_'))) > 0] # filter by environment
+            model_configs = [config for config in configs if len(set(filter_model) & set(config.split('_'))) > 0]
             filtered_configs = [config for config in configs if config in filter_config] # filter by config
             
-            final_configs = set(env_configs + filtered_configs) # filtered configs
+            final_configs = set(env_configs + model_configs + filtered_configs) # filtered configs
             configs = [config for config in configs if config in final_configs] # filter configs
 
         print('Running experiments on the following configs: ', configs)
@@ -68,22 +70,24 @@ if __name__ == '__main__':
                 # load model
                 model = models_dict[args['model']] 
                 
+                # dimensions
+                dim_states = (env_args['N'] * env_args['k']) + env_args['k'] + 1
+                dim_actions = args['n_actions'] if args['model'] == 'dqn' else 1
+                
                 # load environment, agent and buffer
                 env = envs_dict[args['env_name']]
-                #env = envs_dict['bertrand']
-                env = env(**env_args, timesteps = train_args['timesteps'])      
-
-                dim_states = (env.N * env.k) + env.k + 1
-                dim_actions = args['n_actions'] if args['model'] == 'dqn' else 1
+                env = env(**env_args, timesteps = train_args['timesteps'], dim_actions = dim_actions)      
                 
                 agents = [model(dim_states, dim_actions, **agent_args) for _ in range(env.N)]
                 buffer = ReplayBuffer(dim_states = dim_states, N = env.N, **buffer_args)
                 
                 # train
-                try:
-                    train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, **train_args)
-                except:
-                    failed_experiments.append(exp_name)
+                #try:
+                #    train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, **train_args)
+                #except:
+                #    failed_experiments.append(exp_name)
+                train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, **train_args)
+                    
                 
             execution_time = time.time() - start_time
 

@@ -12,93 +12,58 @@ class DQN(nn.Module):
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         
-        self.embedding = nn.Linear(1, hidden_size)
-        # input: N x seq_large (k) x features (N)
-        self.lstm = nn.LSTM(input_size = input_size, hidden_size = hidden_size, num_layers = num_layers,
-                            batch_first = True, dropout = dropout)
-        
-        self.fc = nn.Linear(hidden_size * 2, output_size)
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, output_size)
         
     def forward(self, state):
         
-        # unpack
-        inflation, past_prices, past_inflation = state
+        x = F.relu(self.fc1(state))
+        x = F.relu(self.fc2(x))
         
-        history = torch.cat([past_prices, past_inflation], dim = 2)
-        
-        # inflation embedding
-        inflation = F.relu(self.embedding(inflation))
-        
-        # history lstm
-        h_0 = Variable(torch.randn(
-            self.num_layers, history.size(0), self.hidden_size))
-        
-        c_0 = Variable(torch.randn(
-            self.num_layers, history.size(0), self.hidden_size))
-        
-        history, hidden = self.lstm(history, (h_0, c_0))
-        history = F.relu(history[:, -1, :])
-        
-        # concatenate
-        x = torch.cat([inflation, history], dim = 1)
-        
-        # output -1 to 1
-        x = self.fc(x)
-        
-        return x
+        return self.fc3(x)
 
 class DQNAgent():
-    def __init__(self, N, lr = 1e-3, gamma = 0.99, target_steps = 200, hidden_size = 256, epsilon = 0.9, epsilon_decay = 0.99, dim_actions = 15):
+    def __init__(self, dim_states, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, hidden_size = 256, epsilon = 0.9, beta = 3e-5):
         
-        # N: number of agents (needed to generate network)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         self.dim_actions = dim_actions
         self.gamma = gamma
         self.epsilon = epsilon
-        self.epsilon_decay = epsilon_decay
+        self.beta = beta
         self.target_steps = target_steps
         self.target_count = 0
+        self.t = 0
         
         # instantiate networks
-        self.network = DQN(N + 1, dim_actions, hidden_size)
-        self.target_network = DQN(N + 1, dim_actions, hidden_size)
+        self.network = DQN(dim_states, dim_actions, hidden_size)
+        self.target_network = DQN(dim_states, dim_actions, hidden_size)
         
         self.target_network.load_state_dict(self.network.state_dict()) # load target network params
         
         self.optimizer = Adam(self.network.parameters(), lr = lr) # optimizer
         
-    def select_action(self, state, action_high, action_low):
+    def select_action(self, state):
 
-        inflation, past_prices, past_inflation = state
-        inflation = torch.tensor(inflation)
-        past_prices = torch.tensor(past_prices).unsqueeze(0)
-        past_inflation = torch.tensor(past_inflation).unsqueeze(0)
-        
-        state = (inflation, past_prices, past_inflation)
+        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
 
-        if np.random.random() > self.epsilon:
+        if np.random.random() > np.exp(-self.beta * self.t):
             with torch.no_grad():
                 action = torch.argmax(self.network(state), dim = 1).item()
         else:
-                action = np.random.randint(0, self.dim_actions)
-                self.epsilon *= self.epsilon_decay
+            action = np.random.randint(0, self.dim_actions)
+            
+        self.t += 1
                 
         return action
     
     def update(self, state, action, reward, state_t1, done):
         
-        inflation = torch.tensor(np.array([s[0] for s in state])).squeeze(2)
-        past_prices = torch.tensor(np.array([s[1] for s in state]))
-        past_inflation = torch.tensor(np.array([s[2] for s in state]))
-        
-        inflation_t1 = torch.tensor(np.array([s[0] for s in state_t1])).squeeze(2)
-        past_prices_t1 = torch.tensor(np.array([s[1] for s in state_t1]))
-        past_inflation_t1 = torch.tensor(np.array([s[2] for s in state_t1]))    
-        
-        state = (inflation, past_prices, past_inflation)
+        state = torch.tensor(state)
         action = torch.tensor(action, dtype = int).unsqueeze(1)
         reward = torch.tensor(reward).unsqueeze(1)
-        state_t1 = (inflation_t1, past_prices_t1, past_inflation_t1)
+        state_t1 = torch.tensor(state_t1)
         done = torch.tensor(done).unsqueeze(dim = 1)
         
         self.target_count += 1

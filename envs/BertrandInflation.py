@@ -34,7 +34,8 @@ class Scaler:
 
 class BertrandEnv():
     def __init__(self, N, k, rho, timesteps, mu = 0.5, a_0 = 0, A = 2, c = 1, v = 3, xi = 0.2, 
-                 inflation_start = 0, use_moving_avg = True, max_var = 2.0):
+                 inflation_start = 0, use_moving_avg = True, moving_dim = 10000, max_var = 2.0, 
+                 dim_actions = 1):
         
         self.N = N # number of agents
         self.k = k # past periods to observe
@@ -48,10 +49,13 @@ class BertrandEnv():
         self.timesteps = timesteps
         self.inflation_start = inflation_start
         self.use_moving_avg = use_moving_avg
-        self.moving_dim = int(1 / rho)
+        self.moving_dim = moving_dim
         self.max_var = max_var
         self.trigger_deviation = False # trigger deviation
         self.altruist = False # altruist actions
+        self.dim_actions = dim_actions
+        self.pN = 1.0
+        self.pM = 1.5
         
         assert v >= k, 'v must be greater or equal than k'
         
@@ -82,7 +86,8 @@ class BertrandEnv():
 
             return result
         
-        nash_solution = fsolve(nash, x0 = [1.0] * self.N)
+        #nash_solution = fsolve(nash, x0 = [1.0] * self.N)
+        nash_solution = fsolve(nash, x0 = [self.pN] * self.N)
         
         assert all(round(price, 4) == round(nash_solution[0], 4) for price in nash_solution), \
         f"Nash price should be unique: {nash_solution}" # all prices are the same
@@ -96,56 +101,57 @@ class BertrandEnv():
         def monopoly(p):
             return -(p - self.c_t) * self.demand(p, self.A_t)
         
-        def objective(trial):
-            solution = minimize(monopoly, x0 = trial.suggest_float('x0', 0, 10, step = 0.05)).x
-            return monopoly(solution)
+        #def objective(trial):
+        #    solution = minimize(monopoly, x0 = trial.suggest_float('x0', 0, 10, step = 0.05)).x
+        #    return monopoly(solution)
 
-        direction = 'minimize'
-        study = optuna.create_study(direction = direction, sampler = TPESampler())
+        #direction = 'minimize'
+        #study = optuna.create_study(direction = direction, sampler = TPESampler())
 
-        study.optimize(objective, n_trials = 20)
+        #study.optimize(objective, n_trials = 20)
 
-        x0 = study.best_trial.params['x0']
+        #x0 = study.best_trial.params['x0']
         
-        pM = minimize(monopoly, x0 = x0).x[0] # float
+        #pM = minimize(monopoly, x0 = x0).x[0] # float
+        pM = minimize(monopoly, x0 = self.pM).x[0] # float
 
         return pM
     
-    def step(self, action):
+    def step(self, actions):
         
         '''
         Computes a step over the environment. Receives an action (array of prices) and return a tuple of (observation, reward, done, _)
         action: array of prices (np.array)
         '''
         
-        self.action_history += [action]
+        self.action_history += [actions]
         
         # scale actions
-        action = [self.rescale_action(action[idx], idx) for idx in range(len(action))]    
+        actions = [self.rescale_action(action) for action in actions]   
         
         if self.trigger_deviation:
-            action[0] = self.pN
+            actions[0] = self.pN
             
         if self.altruist:
-            action[0] = self.pN
+            actions[0] = self.pN
         
         # compute quantities
-        quantities = self.demand(action, self.A_t)
+        quantities = self.demand(actions, self.A_t)
         self.quantities_history.append(quantities)
         # intrinsic reward: (p - c) * q
-        rewards = [(action[agent] - self.c_t) * quantities[agent] for agent in range(self.N)]
+        rewards = [(actions[agent] - self.c_t) * quantities[agent] for agent in range(self.N)]
         #self.rewards_history.append(rewards)
         
         # update price history
-        self.prices_history.append(action)
+        self.prices_history.append(actions)
         
         # obtain inflation
         inflation = self.get_inflation()
         self.inflation_history.append(inflation)
         
         # adjust moving avg -- sacar
-        action = np.array(action, ndmin = 2)
-        self.scaled_history = np.concatenate((self.scaled_history, action), axis = 0)
+        actions = np.array(actions, ndmin = 2)
+        self.scaled_history = np.concatenate((self.scaled_history, actions), axis = 0)
         new_mean = np.mean(self.scaled_history[self.idx+1:self.idx+self.moving_dim+1, :], axis = 0)
         self.moving_avg = np.maximum(new_mean, 0) # update and moving avg always >= 0
         self.moving_history += [self.moving_avg]
@@ -323,17 +329,21 @@ class BertrandEnv():
             
         return inflation_t
     
-    def rescale_action(self, action, agent_idx):
+    def rescale_action(self, action):
         
-        action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
-        
-        if self.use_moving_avg:
-            #scaled_action = np.max([self.moving_avg[agent_idx] * (1 + action), 0.0]) # scale action
-            scaled_action = np.max([action * self.c_t, 0.0]) # variations over cost
+        if self.dim_actions > 1:
+            self.prices_dict = np.linspace(self.action_range[0], self.action_range[1], self.dim_actions)
+            
+            scaled_action = self.prices_dict[action]
         else:
-            scaled_action = action
+            action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
+            
+            if self.use_moving_avg:
+                scaled_action = action * self.c_t # variations over cost
+            else:
+                scaled_action = action
         
-        return scaled_action + self.c_t
+        return np.max([scaled_action + self.c_t, 0.0])
     
     def get_metric(self, rewards, window = 1000):
         
