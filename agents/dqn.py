@@ -24,7 +24,7 @@ class DQN(nn.Module):
         return self.fc3(x)
 
 class DQNAgent():
-    def __init__(self, dim_states, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, hidden_size = 256, epsilon = 0.9, beta = 3e-5):
+    def __init__(self, dim_states, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, hidden_size = 256, epsilon = 0.9, beta = 5e-5):
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         

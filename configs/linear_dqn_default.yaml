@@ -20,11 +20,11 @@ agent: # agent params
 
 buffer: # buffer params
   sample_size: 512
-  buffer_size: 100_000
+  buffer_size: 200_000
 
 train: # train params
   episodes: 1
-  timesteps: 200_000
+  timesteps: 250_000
   update_steps: 1
   deviate_start: 0.85
   deviate_end: 0.95

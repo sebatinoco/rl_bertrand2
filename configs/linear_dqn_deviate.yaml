@@ -1,8 +1,8 @@
-exp_name: sac
-model: sac
+exp_name: dqn
+model: dqn
 env_name: linear
 use_lstm: False
-n_actions: 1
+n_actions: 15
 variation: deviate
 
 env: # environment params
@@ -14,11 +14,8 @@ env: # environment params
   inflation_start: 0
 
 agent: # agent params
-  actor_lr: 0.0001
-  Q_lr: 0.0001
-  alpha_lr: 0.0001
+  lr: 0.1
   gamma: 0.95
-  tau: 0.01
   hidden_size: 256
 
 buffer: # buffer params

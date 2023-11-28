@@ -33,7 +33,7 @@ class Scaler:
         return (obs - mean) / (std + 1e-8)
 
 class BertrandEnv():
-    def __init__(self, N, k, rho, timesteps, mu = 0.5, a_0 = 0, A = 2, c = 1, v = 3, xi = 0.2, 
+    def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3, xi = 0.2, 
                  inflation_start = 0, use_moving_avg = True, moving_dim = 10000, max_var = 2.0, 
                  dim_actions = 1):
         
@@ -56,6 +56,7 @@ class BertrandEnv():
         self.dim_actions = dim_actions
         self.pN = 1.0
         self.pM = 1.5
+        self.rewards_scaler = Scaler(self.moving_dim, dim = self.N)
         
         assert v >= k, 'v must be greater or equal than k'
         
@@ -178,6 +179,7 @@ class BertrandEnv():
         done = False if self.timestep < self.timesteps else True
         info = self.get_metric(rewards)
         
+        #rewards = self.rewards_scaler.transform(rewards)
         #rewards = [(reward - self.pi_N) / (self.pi_M - self.pi_N) for reward in rewards] # rescale accordingly
         self.rewards_history.append(rewards)
         
@@ -226,7 +228,9 @@ class BertrandEnv():
         self.shocks = 0
         
         if self.use_moving_avg: # estoy usando esta via!!
-            self.action_range = [-self.max_var, self.max_var]
+            #self.action_range = [-self.max_var, self.max_var]
+            self.action_range = [-0.5, self.max_var]
+            #self.action_range = [self.pN, self.pM]
         else:
             #self.action_range = [self.price_low, self.price_high]
             self.action_range = [-3, 3]

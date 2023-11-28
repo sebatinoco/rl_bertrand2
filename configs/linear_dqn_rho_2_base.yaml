@@ -1,24 +1,21 @@
-exp_name: sac
-model: sac
+exp_name: dqn_rho_2
+model: dqn
 env_name: linear
 use_lstm: False
-n_actions: 1
-variation: deviate
+n_actions: 15
+variation: base
 
 env: # environment params
   N: 2
   k: 1
   v: 3
-  rho: 0.0002
+  rho: 0.0005
   xi: 0.2
   inflation_start: 0
 
 agent: # agent params
-  actor_lr: 0.0001
-  Q_lr: 0.0001
-  alpha_lr: 0.0001
+  lr: 0.1
   gamma: 0.95
-  tau: 0.01
   hidden_size: 256
 
 buffer: # buffer params
