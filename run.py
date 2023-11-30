@@ -2,6 +2,7 @@ import os
 import yaml
 import torch
 import time
+from tqdm import tqdm
 
 from agents.ddpg import DDPGAgent
 from agents.sac import SACAgent
@@ -15,7 +16,7 @@ from utils.train import train
 from utils.get_plots import get_plots
 from utils.get_folder_size import get_folder_size
 from utils.get_comparison import get_comparison
-from utils.get_table import get_table
+from utils.get_table import get_tables
 
 models_dict = {'sac': SACAgent, 'ddpg': DDPGAgent, 'dqn': DQNAgent}
 envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
@@ -61,8 +62,8 @@ if __name__ == '__main__':
                     train_args = args['train']
                     variation = args['variation']
 
-                train_args['timesteps'] = 500
-                train_args['episodes'] = 1
+                #train_args['timesteps'] = 500
+                #train_args['episodes'] = 1
 
                 # set experiment name
                 exp_name = f"{args['env_name']}_{args['exp_name']}_{variation}_{experiment_idx}"
@@ -98,11 +99,12 @@ if __name__ == '__main__':
     metrics = [metric.replace('.csv', '') for metric in os.listdir('metrics') if ('.csv' in metric) & ('experiment' not in metric)]
     
     # plot
-    for metric in metrics:
+    print('generating plots!')
+    for metric in tqdm(metrics):
         get_plots(metric, window_size = window_size, metrics_folder = metrics_folder)
-        
+
     get_comparison(window_size = window_size, metrics_folder = metrics_folder)
-    get_table()
+    get_tables()
         
     folder_size_mb = get_folder_size('./metrics')
     print(f"Metrics folder size: {folder_size_mb:.2f} MB")

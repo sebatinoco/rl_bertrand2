@@ -1,0 +1,13 @@
+|Delta|p_value
+bertrand_dqn_lr_2_base_1.csv|0.3|0.0
+bertrand_dqn_rho_2_base_1.csv|0.23|0.0
+bertrand_dqn_rho_1_base_1.csv|0.18|0.0
+bertrand_dqn_k_2_base_1.csv|0.18|0.0
+bertrand_dqn_k_1_base_1.csv|0.17|0.0
+bertrand_dqn_gamma_1_base_1.csv|0.17|0.0
+bertrand_dqn_default_1.csv|0.16|0.4
+bertrand_dqn_base_1.csv|0.16|1.0
+bertrand_dqn_gamma_2_base_1.csv|0.15|0.0
+bertrand_dqn_N_1_base_1.csv|-0.02|0.0
+bertrand_dqn_N_2_base_1.csv|-0.08|0.0
+bertrand_dqn_lr_1_base_1.csv|-0.29|0.0

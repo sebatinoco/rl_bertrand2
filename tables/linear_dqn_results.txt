@@ -1,0 +1,13 @@
+|Delta|p_value
+linear_dqn_gamma_2_base_1.csv|0.78|0.92
+linear_dqn_base_1.csv|0.78|1.0
+linear_dqn_rho_2_base_1.csv|0.75|0.0
+linear_dqn_default_1.csv|0.74|0.0
+linear_dqn_k_2_base_1.csv|0.74|0.0
+linear_dqn_lr_2_base_1.csv|0.74|0.0
+linear_dqn_rho_1_base_1.csv|0.74|0.0
+linear_dqn_gamma_1_base_1.csv|0.74|0.0
+linear_dqn_k_1_base_1.csv|0.74|0.0
+linear_dqn_lr_1_base_1.csv|0.69|0.0
+linear_dqn_N_1_base_1.csv|0.42|0.0
+linear_dqn_N_2_base_1.csv|0.4|0.0

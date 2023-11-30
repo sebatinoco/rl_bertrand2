@@ -37,8 +37,8 @@ class DQNAgent():
         self.t = 0
         
         # instantiate networks
-        self.network = DQN(dim_states, dim_actions, hidden_size)
-        self.target_network = DQN(dim_states, dim_actions, hidden_size)
+        self.network = DQN(dim_states, dim_actions, hidden_size).to(self.device)
+        self.target_network = DQN(dim_states, dim_actions, hidden_size).to(self.device)
         
         self.target_network.load_state_dict(self.network.state_dict()) # load target network params
         
@@ -60,11 +60,11 @@ class DQNAgent():
     
     def update(self, state, action, reward, state_t1, done):
         
-        state = torch.tensor(state)
-        action = torch.tensor(action, dtype = int).unsqueeze(1)
-        reward = torch.tensor(reward).unsqueeze(1)
-        state_t1 = torch.tensor(state_t1)
-        done = torch.tensor(done).unsqueeze(dim = 1)
+        state = torch.tensor(state).to(self.device)
+        action = torch.tensor(action, dtype = int).unsqueeze(1).to(self.device)
+        reward = torch.tensor(reward).unsqueeze(1).to(self.device)
+        state_t1 = torch.tensor(state_t1).to(self.device)
+        done = torch.tensor(done).unsqueeze(dim = 1).to(self.device)
         
         self.target_count += 1
         self.update_network(state, action, reward, state_t1, done)
@@ -73,6 +73,12 @@ class DQNAgent():
                 target_param.data.copy_(param.data)
         
     def update_network(self, state, action, reward, state_t1, done):
+        
+        #state = torch.tensor(state).float().to(self.device)
+        #action = torch.tensor(action).to(self.device)
+        #reward = torch.tensor(reward).float().to(self.device)
+        #state_t1 = torch.tensor(state_t1).float().to(self.device)
+        #done = torch.tensor(done).float().to(self.device)
         
         with torch.no_grad():
             target_max = torch.max(self.target_network(state_t1), dim = 1).values # max of Q values on t1
