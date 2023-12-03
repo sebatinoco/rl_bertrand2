@@ -4,7 +4,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import os
 
-def get_tables():
+def get_tables(percent = 0.1):
 
     envs = list(set([metric.split('_')[0] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
     models = list(set([metric.split('_')[1] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
@@ -12,15 +12,16 @@ def get_tables():
     for env in envs:
         for model in models:
             metrics = os.listdir('metrics')
-            metrics = [metric for metric in metrics if (env in metric and model in metric) and ('altruist' not in metric) and ('deviate' not in metric)]
+            #metrics = [metric for metric in metrics if (env in metric and model in metric) and ('altruist' not in metric) and ('deviate' not in metric)]
+            metrics = [metric for metric in metrics if (env in metric and model in metric)]
 
             delta_base = pd.read_csv(f'metrics/{env}_{model}_base_1.csv', sep = ';')['delta']
 
             results = {}
             for metric in metrics:
-                
                 df_metric = pd.read_csv(f'metrics/{metric}', sep = ';')
-                delta_metric = df_metric['delta']
+                tail_percent = int(df_metric.shape[0] * percent)
+                delta_metric = df_metric['delta'].tail(tail_percent) if percent < 1 else df_metric['delta']
                 avg_delta = np.round(np.mean(delta_metric), 2)
                 
                 t_statistic, p_value = stats.ttest_ind(delta_base, delta_metric)

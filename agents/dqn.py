@@ -74,12 +74,6 @@ class DQNAgent():
         
     def update_network(self, state, action, reward, state_t1, done):
         
-        #state = torch.tensor(state).float().to(self.device)
-        #action = torch.tensor(action).to(self.device)
-        #reward = torch.tensor(reward).float().to(self.device)
-        #state_t1 = torch.tensor(state_t1).float().to(self.device)
-        #done = torch.tensor(done).float().to(self.device)
-        
         with torch.no_grad():
             target_max = torch.max(self.target_network(state_t1), dim = 1).values # max of Q values on t1
             td_target = reward.squeeze() + self.gamma * target_max * (1 - done.squeeze()) # fix the target

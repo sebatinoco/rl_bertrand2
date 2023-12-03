@@ -336,9 +336,10 @@ class BertrandEnv():
     def rescale_action(self, action):
         
         if self.dim_actions > 1:
+            # dict between 0.5 and delta
             self.prices_dict = np.linspace(self.action_range[0], self.action_range[1], self.dim_actions)
             
-            scaled_action = self.prices_dict[action]
+            scaled_action = self.prices_dict[action] * self.c_t
         else:
             action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
             
