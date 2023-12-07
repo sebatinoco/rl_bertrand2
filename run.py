@@ -3,6 +3,7 @@ import yaml
 import torch
 import time
 from tqdm import tqdm
+import numpy as np
 
 from agents.ddpg import DDPGAgent
 from agents.sac import SACAgent
@@ -61,9 +62,13 @@ if __name__ == '__main__':
                     buffer_args = args['buffer']
                     train_args = args['train']
                     variation = args['variation']
+                    random_state = args['random_state']
 
-                #train_args['timesteps'] = 500
-                #train_args['episodes'] = 1
+                train_args['timesteps'] = 1000
+                train_args['episodes'] = 1
+                
+                # random seed
+                np.random.seed(random_state)
 
                 # set experiment name
                 exp_name = f"{args['env_name']}_{args['exp_name']}_{variation}_{experiment_idx}"
@@ -77,9 +82,9 @@ if __name__ == '__main__':
                 
                 # load environment, agent and buffer
                 env = envs_dict[args['env_name']]
-                env = env(**env_args, timesteps = train_args['timesteps'], dim_actions = dim_actions)      
+                env = env(**env_args, timesteps = train_args['timesteps'], dim_actions = dim_actions, random_state = random_state)      
                 
-                agents = [model(dim_states, dim_actions, **agent_args) for _ in range(env.N)]
+                agents = [model(dim_states, dim_actions, **agent_args, random_state = random_state + _) for _ in range(env.N)]
                 buffer = ReplayBuffer(dim_states = dim_states, N = env.N, **buffer_args)
                 
                 # train

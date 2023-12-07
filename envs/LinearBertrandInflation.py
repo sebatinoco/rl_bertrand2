@@ -29,25 +29,23 @@ class Scaler:
         return (obs - mean) / (std + 1e-8)
 
 class LinearBertrandEnv():
-    def __init__(self, N, k, rho, timesteps, A = 3, e = 1, c = 1, v = 3, xi = 0.2, 
-                 inflation_start = 0, use_moving_avg = True, moving_dim = 1000, max_var = 2.0,
-                 dim_actions = 1):
+    def __init__(self, N, k, rho, timesteps, A = 3, e = 1, c = 1, v = 3,
+                 inflation_start = 0, moving_dim = 1000, max_var = 2.0,
+                 dim_actions = 1, random_state = 3380):
         
         self.N = N # number of agents
         self.k = k # past periods to observe
         self.rho = rho # probability of changing prices
         self.c = c # marginal cost
         self.v = v # length of past inflations to predict current inflation
-        self.xi = xi # price limit deflactor
         self.moving_dim = moving_dim
-        self.use_moving_avg = use_moving_avg
         self.max_var = max_var # max variation (moving avg)
         self.timesteps = timesteps # total steps per episode
         self.inflation_start = inflation_start # steps to begin with inflation
         self.trigger_deviation = False # trigger deviation
         self.altruist = False # altruist actions
-        self.dim_actions = dim_actions
-        #self.discrete_actions = discrete_actions # discrete or continuous actions
+        self.dim_actions = dim_actions # number of actions
+        self.random_state = random_state
         
         assert v >= k, 'v must be greater or equal than k'
         
@@ -90,25 +88,17 @@ class LinearBertrandEnv():
         inflation = self.get_inflation()
         self.inflation_history.append(inflation)
         
-        # sacar
+        # store scaled actions
         actions = np.array(actions, ndmin = 2)
         self.scaled_history = np.concatenate((self.scaled_history, actions), axis = 0)
-        new_mean = np.mean(self.scaled_history[self.idx+1:self.idx+self.moving_dim+1, :], axis = 0)
-        self.moving_avg = np.maximum(new_mean, 0) # update and moving avg always >= 0
-        self.moving_history += [self.moving_avg]
-        self.idx += 1
         
         # gather observation
         inflation = np.array(inflation, ndmin = 2, dtype = 'float32')
         cost = np.array(self.c_t, ndmin = 2, dtype = 'float32')
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
-        past_inflation = np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T # sacar
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
-        moving_avg = np.array(self.moving_avg, ndmin = 2, dtype = 'float32') # sacar
-        
         past_prices = past_prices - past_costs
         
-        #ob_t1 = (inflation, cost, past_prices, past_inflation, past_costs, moving_avg) # sacar
         ob_t1 = (cost, past_prices, past_costs)
         ob_t1 = np.concatenate([element.flatten() for element in ob_t1])
         ob_t1 = self.obs_scaler.transform(ob_t1)
@@ -123,6 +113,11 @@ class LinearBertrandEnv():
         return ob_t1, reward, done, info
     
     def init_history(self):
+        
+        '''
+        Init lists for storing metrics
+        '''
+        
         self.inflation_history = [] # inflation history
         self.prices_history = [] # prices history
         self.quantities_history = [] # quantities history
@@ -138,12 +133,14 @@ class LinearBertrandEnv():
         self.A_history = [] # disposition to pay history
         
     def init_boundaries(self):
+        
+        '''
+        Init boundaries of experiment
+        '''
+        
         # set action boundaries
         self.pN = self.c_t # get nash price
         self.pM = (self.A_t + self.c_t) / 2 # get monopoly price
-        
-        #self.nash_history += [self.pN]
-        #self.monopoly_history += [self.pM]
         
         self.pi_N = (self.pN - self.c) * self.demand([self.pN], self.A_t)[0]
         self.pi_M = (self.pM - self.c) * self.demand([self.pM], self.A_t)[0]
@@ -153,24 +150,10 @@ class LinearBertrandEnv():
 
         assert self.pi_M > self.pi_N, f'monopoly profits should be higher than nash profits: {self.pi_N} vs {self.pi_M}'
         
-        self.price_high = self.pM * (1 + self.xi)
-        self.price_low = self.pN * (1 - self.xi)
+        self.action_range = [-0.5, self.max_var]
         
-        # limit prices
-        expected_shocks = int((self.timesteps - self.inflation_start) * self.rho)
-        expected_shocks = np.max([0, expected_shocks])
-        #print('\n' + 'Expected shocks:', expected_shocks)
-        
-        self.expected_shocks = expected_shocks
-        self.shocks = 0
-        
-        if self.use_moving_avg:
-            self.action_range = [-self.max_var, self.max_var]
-        else:
-            self.action_range = [self.price_low, self.price_high]
-            #self.action_range[1] = self.price_high * (1.035 ** expected_shocks)
-            self.action_range[1] = self.price_high + self.c * (1.02 ** expected_shocks) # dA = dC
-            self.action_range = [-3, 3]
+        self.price_high = np.max([0, self.c_t * (1 + self.action_range[1])])
+        self.price_low = np.max([0, self.c_t * (1 + self.action_range[0])])
     
     def reset(self):
         
@@ -191,27 +174,22 @@ class LinearBertrandEnv():
         self.init_boundaries()
         
         # first observation
-        self.prices_space = gym.spaces.Box(low = self.price_low, high = self.price_high, shape = (self.k, self.N), dtype = float) # prices space
-        self.inflation_space = gym.spaces.Box(low = 0.015, high = 0.035, shape = (self.v,), dtype = float) # inflation space
+        self.prices_space = gym.spaces.Box(low = self.price_low, high = self.price_high, shape = (self.k, self.N), dtype = float, seed = self.random_state) # prices space
+        self.inflation_space = gym.spaces.Box(low = 0.015, high = 0.035, shape = (self.v,), dtype = float, seed = self.random_state) # inflation space
         
         self.prices_history = [list(prices) for prices in self.prices_space.sample()] # init prices
         self.inflation_history = list(self.inflation_space.sample()) # init inflation
         
         self.scaled_history = np.random.uniform(self.price_low, self.price_high, (self.moving_dim, self.N))
-        self.moving_avg = np.mean(self.scaled_history, axis = 0) # [moving_avg1, moving_avg2, ...]
-        self.idx = 0
         
         self.costs_history = [self.c_t]
         for inflation in self.inflation_history[::-1]:
             self.costs_history = [self.costs_history[0] / (1 + inflation)] + self.costs_history
         
         ob_t = (
-            #np.array(inflation, ndmin = 2, dtype = 'float32'), 
             np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
             np.array(self.prices_history, ndmin = 2, dtype = 'float32') - self.c_t, 
-            #np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T, 
             np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T,
-            #np.array(self.moving_avg, ndmin = 2, dtype = 'float32'),
             )
         
         ob_t = np.concatenate([dim.flatten() for dim in ob_t])
@@ -240,6 +218,11 @@ class LinearBertrandEnv():
         return quantities
     
     def get_inflation(self):
+        
+        '''
+        Returns new value of inflation
+        '''
+        
         sample = np.random.rand()
         
         inflation_t = 0
@@ -256,7 +239,6 @@ class LinearBertrandEnv():
             self.c_t += dc # adjust marginal cost
             self.A_t += dc # dc = dA
             
-            #print('Calculating new equilibria...')
             self.pN = self.c_t # get nash price
             self.pM = (self.A_t + self.c_t) / 2 # get monopoly price
             
@@ -266,11 +248,6 @@ class LinearBertrandEnv():
             
             self.price_high = self.pM * (1 + self.xi)
             self.price_low = self.pN * (1 - self.xi)
-            
-            #if self.use_moving_avg:
-            #    self.action_range = [self.price_low, self.price_high]
-            
-            self.shocks += 1
         
         self.costs_history += [self.c_t]
         self.A_history += [self.A_t]
@@ -283,21 +260,26 @@ class LinearBertrandEnv():
     
     def rescale_action(self, action):
         
+        '''
+        Receives an action, returns the scaled action. Scaling depends on discrete or continuous agent.
+        '''
+        
         if self.dim_actions > 1:
             self.prices_dict = np.linspace(self.action_range[0], self.action_range[1], self.dim_actions)
             
-            scaled_action = self.prices_dict[action]
+            scaled_action = self.prices_dict[action] * self.c_t
         else:
             action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
             
-            if self.use_moving_avg:
-                scaled_action = action * self.c_t # variations over cost
-            else:
-                scaled_action = action
+            scaled_action = action * self.c_t # variations over cost
             
         return np.max([scaled_action + self.c_t, 0.0])
     
     def get_metric(self, rewards, window = 1000):
+        
+        '''
+        Report moving average of delta
+        '''
         
         metric = (np.max(rewards) - self.pi_N) / (self.pi_M - self.pi_N)
         self.metric_history.append(metric)

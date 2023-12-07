@@ -11,8 +11,14 @@ SAC: observa inflacion, costos, costos pasados, inflacion pasada, precios pasado
 
 class SoftQNetwork(nn.Module):
     
-    def __init__(self, num_inputs, num_actions, hidden_size=256, init_w=3e-3):
+    def __init__(self, num_inputs, num_actions, hidden_size=256, init_w=3e-3, random_state = 3380):
         super(SoftQNetwork, self).__init__()
+        
+        torch.manual_seed(random_state)
+        torch.backends.cudnn.deterministic = True
+        torch.cuda.manual_seed(random_state)
+        torch.cuda.manual_seed_all(random_state)
+        
         self.linear1 = nn.Linear(num_inputs + num_actions, hidden_size)
         self.linear2 = nn.Linear(hidden_size, hidden_size)
         self.linear3 = nn.Linear(hidden_size, 1)

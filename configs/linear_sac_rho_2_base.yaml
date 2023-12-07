@@ -4,13 +4,13 @@ env_name: linear
 use_lstm: False
 n_actions: 1
 variation: base
+random_state: 3380
 
 env: # environment params
   N: 2
   k: 1
   v: 3
   rho: 0.0005
-  xi: 0.2
   inflation_start: 0
 
 agent: # agent params

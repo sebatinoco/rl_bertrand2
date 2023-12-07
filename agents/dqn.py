@@ -6,11 +6,17 @@ from torch.optim import Adam
 import numpy as np
 
 class DQN(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size = 256, num_layers = 2, dropout = 0.1):
+    def __init__(self, input_size, output_size, hidden_size = 256, num_layers = 2, dropout = 0.1, random_state = 3380):
         super().__init__()
         
         self.num_layers = num_layers
         self.hidden_size = hidden_size
+        self.random_state = random_state
+        
+        torch.manual_seed(random_state)
+        torch.backends.cudnn.deterministic = True
+        torch.cuda.manual_seed(random_state)
+        torch.cuda.manual_seed_all(random_state)
         
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
@@ -24,7 +30,8 @@ class DQN(nn.Module):
         return self.fc3(x)
 
 class DQNAgent():
-    def __init__(self, dim_states, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, hidden_size = 256, epsilon = 0.9, beta = 5e-5):
+    def __init__(self, dim_states, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, 
+                 hidden_size = 256, epsilon = 0.9, beta = 5e-5, random_state = 3380):
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
@@ -35,6 +42,7 @@ class DQNAgent():
         self.target_steps = target_steps
         self.target_count = 0
         self.t = 0
+        self.random_state = random_state
         
         # instantiate networks
         self.network = DQN(dim_states, dim_actions, hidden_size).to(self.device)
