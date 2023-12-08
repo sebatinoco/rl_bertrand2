@@ -2,6 +2,7 @@ import numpy as np
 import gymnasium as gym
 from scipy.optimize import minimize, fsolve
 import torch
+from utils.get_inflation_serie import get_inflation_serie
 
 class Scaler:
     def __init__(self, moving_dim, dim):
@@ -38,7 +39,7 @@ class Scaler:
 
 class BertrandEnv():
     def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3,
-                 inflation_start = 0, moving_dim = 10000, max_var = 2.0, 
+                 inflation_start = 0, moving_dim = 10000, max_var = 2.0, use_inflation_data = False,
                  dim_actions = 1, random_state = 3380):
         
         self.N = N # number of agents
@@ -57,15 +58,19 @@ class BertrandEnv():
         self.altruist = False # altruist actions
         self.dim_actions = dim_actions # number of actions
         self.random_state = random_state # random state
+        self.use_inflation_data = use_inflation_data # use countries inflation data or not
         
         self.pN = 1.0
         self.pM = 1.5
         self.rewards_scaler = Scaler(self.moving_dim, dim = self.N)
         
-        assert v >= k, 'v must be greater or equal than k'
+        if use_inflation_data:
+            self.inflation_serie = get_inflation_serie()
         
-        self.inflation_model = torch.jit.load('inflation/inflation_model.pt')
-        self.inflation_model.eval()
+        else:
+            assert v >= k, 'v must be greater or equal than k'
+            self.inflation_model = torch.jit.load('inflation/inflation_model.pt')
+            self.inflation_model.eval()
                 
     def get_nash(self):
         def nash(p):
@@ -219,6 +224,7 @@ class BertrandEnv():
         self.A_t = self.A
         self.c_t = self.c
         self.timestep = 0
+        self.inflation_count = 0
         
         # init history lists
         self.init_history()
@@ -271,15 +277,17 @@ class BertrandEnv():
         '''
         
         sample = np.random.rand()
-        
         inflation_t = 0
         if (sample < self.rho) & (self.gen_inflation):
             
-            with torch.no_grad():
-                inflation_values = np.array(self.inflation_history) # transform to array
-                inflation_values = inflation_values[inflation_values != 0][-self.v]
-                inflation_values = torch.tensor(inflation_values).reshape(1, -1, 1).float()
-                inflation_t = float(self.inflation_model(inflation_values).squeeze())
+            if self.use_inflation_data:
+                inflation_t = self.inflation_serie.iloc[self.inflation_count]
+            else:
+                with torch.no_grad():
+                    inflation_values = np.array(self.inflation_history) # transform to array
+                    inflation_values = inflation_values[inflation_values != 0][-self.v]
+                    inflation_values = torch.tensor(inflation_values).reshape(1, -1, 1).float()
+                    inflation_t = float(self.inflation_model(inflation_values).squeeze())
             
             dc = self.c_t * (inflation_t)
             
@@ -291,6 +299,8 @@ class BertrandEnv():
             
             self.pi_N = (self.pN - self.c_t) * self.demand([self.pN], self.A_t)[0]
             self.pi_M = (self.pM - self.c_t) * self.demand([self.pM], self.A_t)[0]
+            
+            self.inflation_count += 1
             #assert self.pi_M > self.pi_N, f'monopoly profits should be higher than nash profits: {self.pi_N} vs {self.pi_M}'
             
         self.costs_history += [self.c_t]
