@@ -1,24 +1,21 @@
-exp_name: sac_N_1
-model: sac
-env_name: linear
+exp_name: dqn
+model: dqn
+env_name: bertrand
 use_lstm: False
-n_actions: 1
-variation: base
+n_actions: 15
+variation: train-test
 random_state: 3380
 
 env: # environment params
-  N: 5
+  N: 2
   k: 1
   v: 3
   rho: 0.0002
   inflation_start: 0
 
 agent: # agent params
-  actor_lr: 0.0001
-  Q_lr: 0.0001
-  alpha_lr: 0.0001
+  lr: 0.1
   gamma: 0.95
-  tau: 0.01
   hidden_size: 256
 
 buffer: # buffer params

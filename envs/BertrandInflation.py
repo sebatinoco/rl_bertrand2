@@ -39,8 +39,8 @@ class Scaler:
 
 class BertrandEnv():
     def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3,
-                 inflation_start = 0, moving_dim = 10000, max_var = 2.0, use_inflation_data = False,
-                 dim_actions = 1, random_state = 3380):
+                 inflation_start = 0, moving_dim = 10000, max_var = 2.0, use_inflation_data = True,
+                 dim_actions = 1, random_state = 3380, normalize = True):
         
         self.N = N # number of agents
         self.k = k # past periods to observe
@@ -59,6 +59,7 @@ class BertrandEnv():
         self.dim_actions = dim_actions # number of actions
         self.random_state = random_state # random state
         self.use_inflation_data = use_inflation_data # use countries inflation data or not
+        self.normalize = normalize # normalize data
         
         self.pN = 1.0
         self.pM = 1.5
@@ -154,11 +155,13 @@ class BertrandEnv():
         cost = np.array(self.c_t, ndmin = 2, dtype = 'float32')
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
-        past_prices = past_prices - past_costs
+        #past_prices = past_prices - past_costs
+        past_prices = (past_prices - past_costs) / past_costs
         
         ob_t1 = (cost, past_prices, past_costs)
         ob_t1 = np.concatenate([element.flatten() for element in ob_t1])
-        ob_t1 = self.obs_scaler.transform(ob_t1)
+        if self.normalize:
+            ob_t1 = self.obs_scaler.transform(ob_t1)
         
         self.timestep += 1
         if self.timestep > self.inflation_start:
@@ -234,26 +237,39 @@ class BertrandEnv():
         
         # first observation
         self.prices_space = gym.spaces.Box(low = self.price_low, high = self.price_high, shape = (self.k, self.N), dtype = float, seed = self.random_state) # prices space
-        self.inflation_space = gym.spaces.Box(low = 0.015, high = 0.035, shape = (self.v,), dtype = float, seed = self.random_state) # inflation space
+        #self.inflation_space = gym.spaces.Box(low = 0.015, high = 0.035, shape = (self.v,), dtype = float, seed = self.random_state) # inflation space
         
-        self.prices_history = [list(prices) for prices in self.prices_space.sample()] # init prices
-        self.inflation_history = list(self.inflation_space.sample()) # init inflation
+        #self.prices_history = [list(prices) for prices in self.prices_space.sample()] # init prices
+        
+        if self.dim_actions > 1:
+            self.prices_space = gym.spaces.Box(low = self.action_range[0], high = self.action_range[1], shape = (self.k, self.N), seed = self.random_state) # init space
+            sampled_prices = self.prices_space.sample() # sample prices
+        else:
+            action_space = np.linspace(self.action_range[0], self.action_range[1], self.dim_actions) # grid over actions
+            multi_space = gym.spaces.MultiDiscrete(np.full((self.k, self.N), self.dim_actions), seed = self.random_state) # init space
+            sampled_prices = np.reshape([action_space[action] for action in multi_space.sample().flatten()], (self.k, self.N)).astype('float32') # sample prices
+            
+        self.prices_history = [list(prices) for prices in sampled_prices] # prices to list
+        #self.inflation_history = list(self.inflation_space.sample()) # init inflation
+        self.inflation_history = [0.0] * self.k
         
         self.scaled_history = np.random.uniform(self.price_low, self.price_high, (self.moving_dim, self.N))
         
-        self.costs_history = [self.c_t]
-        for inflation in self.inflation_history[::-1]:
-            self.costs_history = [self.costs_history[0] / (1 + inflation)] + self.costs_history
+        self.costs_history = [self.c_t] * self.k
+        #for inflation in self.inflation_history[::-1]:
+        #    self.costs_history = [self.costs_history[0] / (1 + inflation)] + self.costs_history
         
         ob_t = (
             np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
-            np.array(self.prices_history, ndmin = 2, dtype = 'float32') - self.c_t, 
+            (np.array(self.prices_history, ndmin = 2, dtype = 'float32') - self.c_t) / self.c_t, 
+            #np.array(self.prices_history, ndmin = 2, dtype = 'float32'), 
             np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
             )
         
         ob_t = np.concatenate([dim.flatten() for dim in ob_t])
-        self.obs_scaler = Scaler(moving_dim = self.moving_dim, dim = ob_t.shape[0])
-        ob_t = self.obs_scaler.transform(ob_t)
+        if self.normalize:
+            self.obs_scaler = Scaler(moving_dim = self.moving_dim, dim = ob_t.shape[0])
+            ob_t = self.obs_scaler.transform(ob_t)
         
         return ob_t
     
@@ -282,6 +298,9 @@ class BertrandEnv():
             
             if self.use_inflation_data:
                 inflation_t = self.inflation_serie.iloc[self.inflation_count]
+                self.inflation_count += 1
+                if self.inflation_count > len(self.inflation_serie):
+                    self.inflation_count = 0
             else:
                 with torch.no_grad():
                     inflation_values = np.array(self.inflation_history) # transform to array
@@ -299,8 +318,7 @@ class BertrandEnv():
             
             self.pi_N = (self.pN - self.c_t) * self.demand([self.pN], self.A_t)[0]
             self.pi_M = (self.pM - self.c_t) * self.demand([self.pM], self.A_t)[0]
-            
-            self.inflation_count += 1
+
             #assert self.pi_M > self.pi_N, f'monopoly profits should be higher than nash profits: {self.pi_N} vs {self.pi_M}'
             
         self.costs_history += [self.c_t]

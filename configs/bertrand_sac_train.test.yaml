@@ -1,13 +1,13 @@
-exp_name: sac_N_1
+exp_name: sac
 model: sac
-env_name: linear
+env_name: bertrand
 use_lstm: False
 n_actions: 1
-variation: base
+variation: train-test
 random_state: 3380
 
 env: # environment params
-  N: 5
+  N: 2
   k: 1
   v: 3
   rho: 0.0002

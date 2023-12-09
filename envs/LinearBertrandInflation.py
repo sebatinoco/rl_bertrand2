@@ -30,7 +30,7 @@ class Scaler:
 
 class LinearBertrandEnv():
     def __init__(self, N, k, rho, timesteps, A = 3, e = 1, c = 1, v = 3,
-                 inflation_start = 0, moving_dim = 1000, max_var = 2.0, use_inflation_data = False,
+                 inflation_start = 0, moving_dim = 1000, max_var = 2.0, use_inflation_data = True,
                  dim_actions = 1, random_state = 3380):
         
         self.N = N # number of agents
@@ -233,6 +233,9 @@ class LinearBertrandEnv():
             
             if self.use_inflation_data:
                 inflation_t = self.inflation_serie.iloc[self.inflation_count]
+                self.inflation_count += 1
+                if self.inflation_count > len(self.inflation_serie):
+                    self.inflation_count = 0
             else:
                 with torch.no_grad():
                     inflation_values = np.array(self.inflation_history) # transform to array
@@ -251,7 +254,8 @@ class LinearBertrandEnv():
             self.pi_N = (self.pN - self.c_t) * self.demand([self.pN], self.A_t)[0]
             self.pi_M = (self.pM - self.c_t) * self.demand([self.pM], self.A_t)[0]
             
-            self.inflation_count += 1
+
+            
             assert self.pi_M > self.pi_N, "monopoly profits should be higher than nash profits"
             
         

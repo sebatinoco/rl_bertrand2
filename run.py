@@ -11,6 +11,7 @@ from agents.dqn import DQNAgent
 
 from envs.BertrandInflation import BertrandEnv
 from envs.LinearBertrandInflation import LinearBertrandEnv
+
 from replay_buffer import ReplayBuffer
 from utils.run_args import run_args
 from utils.train import train
@@ -41,11 +42,11 @@ if __name__ == '__main__':
     if train_agents:
         # filter configs if specified
         if filter_env or filter_model or filter_config:
-            env_configs = [config for config in configs if len(set(filter_env) & set(config.split('_'))) > 0] # filter by environment
-            model_configs = [config for config in configs if len(set(filter_model) & set(config.split('_'))) > 0]
-            filtered_configs = [config for config in configs if config in filter_config] # filter by config
+            env_configs = [config for config in configs if len(set(filter_env) & set(config.split('_'))) > 0] or configs # filter by environment
+            model_configs = [config for config in configs if len(set(filter_model) & set(config.split('_'))) > 0] or configs # filter by env
+            filtered_configs = [config for config in configs if config in filter_config] or configs # filter by config
             
-            final_configs = set(env_configs + model_configs + filtered_configs) # filtered configs
+            final_configs = set(env_configs) & set(model_configs) & set(filtered_configs) # filtered configs
             configs = [config for config in configs if config in final_configs] # filter configs
 
         print('Running experiments on the following configs: ', configs)
@@ -64,7 +65,7 @@ if __name__ == '__main__':
                     variation = args['variation']
                     random_state = args['random_state']
 
-                train_args['timesteps'] = 1000
+                train_args['timesteps'] = 500
                 train_args['episodes'] = 1
                 
                 # random seed

@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, deviate_start, deviate_end, exp_name = 'experiment'):
+def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, deviate_start, deviate_end, test_size, exp_name = 'experiment'):
     
     prices_history = np.zeros((episodes, timesteps, N))
     actions_history = np.zeros((episodes, timesteps, N))
@@ -18,6 +18,7 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
     
     for episode in range(episodes):
         ob_t = env.reset()
+        update_agents = True
         for t in range(timesteps):
             actions = [agent.select_action(ob_t) for agent in agents]    
             
@@ -31,13 +32,17 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
             elif variation == 'altruist':
                 env.altruist = True
             
+            elif (variation == 'train-test'):
+                if (t/timesteps > (1 - test_size)):
+                    update_agents = False
+            
             ob_t1, rewards, done, info = env.step(actions)
             
             experience = (ob_t, actions, rewards, ob_t1, done)
             
             buffer.store_transition(*experience)
             
-            if (t % update_steps == 0) & (t >= buffer.sample_size):
+            if (t % update_steps == 0) & (t >= buffer.sample_size) & (update_agents):
                 for agent_idx in range(N):
                     agent = agents[agent_idx]
                     sample = buffer.sample(agent_idx)
