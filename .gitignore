@@ -211,6 +211,7 @@ pyrightconfig.json
 
 # other files
 test.ipynb
+notebook_profe.ipynb
 test2.csv   
 testing_plots.ipynb
 reward_distribution.pdf

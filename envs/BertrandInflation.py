@@ -155,7 +155,6 @@ class BertrandEnv():
         cost = np.array(self.c_t, ndmin = 2, dtype = 'float32')
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
-        #past_prices = past_prices - past_costs
         past_prices = (past_prices - past_costs) / past_costs
         
         ob_t1 = (cost, past_prices, past_costs)
@@ -236,11 +235,6 @@ class BertrandEnv():
         self.init_boundaries()
         
         # first observation
-        self.prices_space = gym.spaces.Box(low = self.price_low, high = self.price_high, shape = (self.k, self.N), dtype = float, seed = self.random_state) # prices space
-        #self.inflation_space = gym.spaces.Box(low = 0.015, high = 0.035, shape = (self.v,), dtype = float, seed = self.random_state) # inflation space
-        
-        #self.prices_history = [list(prices) for prices in self.prices_space.sample()] # init prices
-        
         if self.dim_actions > 1:
             self.prices_space = gym.spaces.Box(low = self.action_range[0], high = self.action_range[1], shape = (self.k, self.N), seed = self.random_state) # init space
             sampled_prices = self.prices_space.sample() # sample prices
@@ -250,19 +244,13 @@ class BertrandEnv():
             sampled_prices = np.reshape([action_space[action] for action in multi_space.sample().flatten()], (self.k, self.N)).astype('float32') # sample prices
             
         self.prices_history = [list(prices) for prices in sampled_prices] # prices to list
-        #self.inflation_history = list(self.inflation_space.sample()) # init inflation
         self.inflation_history = [0.0] * self.k
-        
         self.scaled_history = np.random.uniform(self.price_low, self.price_high, (self.moving_dim, self.N))
-        
         self.costs_history = [self.c_t] * self.k
-        #for inflation in self.inflation_history[::-1]:
-        #    self.costs_history = [self.costs_history[0] / (1 + inflation)] + self.costs_history
         
         ob_t = (
             np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
             (np.array(self.prices_history, ndmin = 2, dtype = 'float32') - self.c_t) / self.c_t, 
-            #np.array(self.prices_history, ndmin = 2, dtype = 'float32'), 
             np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
             )
         

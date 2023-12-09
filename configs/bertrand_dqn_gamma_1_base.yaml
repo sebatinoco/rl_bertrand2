@@ -14,7 +14,7 @@ env: # environment params
   inflation_start: 0
 
 agent: # agent params
-  lr: 0.1
+  lr: 0.01
   gamma: 0.8
   hidden_size: 256
 
