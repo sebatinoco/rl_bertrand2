@@ -40,7 +40,7 @@ class Scaler:
 class BertrandEnv():
     def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3,
                  inflation_start = 0, moving_dim = 10000, max_var = 2.0, use_inflation_data = True,
-                 dim_actions = 1, random_state = 3380, normalize = True):
+                 dim_actions = 1, random_state = 3380, normalize = True, debug = False):
         
         self.N = N # number of agents
         self.k = k # past periods to observe
@@ -170,6 +170,8 @@ class BertrandEnv():
         info = self.get_metric(rewards)
         
         self.rewards_history.append(rewards)
+        if self.debug:
+            self.state_history += [ob_t1]
         
         return ob_t1, rewards, done, info
     
@@ -192,6 +194,7 @@ class BertrandEnv():
         self.moving_history = [] # moving avg history
         self.action_history = [] # action history
         self.A_history = [] # vertical diff history
+        self.state_history = [] # for debugging
     
     def init_boundaries(self):        
         
@@ -259,6 +262,8 @@ class BertrandEnv():
             self.obs_scaler = Scaler(moving_dim = self.moving_dim, dim = ob_t.shape[0])
             ob_t = self.obs_scaler.transform(ob_t)
         
+        if self.debug:
+            self.state_history += [ob_t]
         return ob_t
     
     def demand(self, prices, A):

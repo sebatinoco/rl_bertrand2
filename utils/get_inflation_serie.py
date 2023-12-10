@@ -6,7 +6,7 @@ import random
 def get_inflation_serie(start_year: int = 2000, end_year: int = 2020, country: str = None, random_state = 3380):
     
     random.seed(random_state)
-    df_inflation = pd.read_excel('inflation/inflation-data.xlsx', sheet_name='hcpi_m')
+    df_inflation = pd.read_excel('inflation/Inflation-data.xlsx', sheet_name='hcpi_m')
 
     value_vars = [col for col in df_inflation.columns if type(col) == int]
 
