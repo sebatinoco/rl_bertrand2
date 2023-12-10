@@ -1,13 +1,26 @@
 import numpy as np
 
+def split_state(state, N, k, idx):
+    
+    prices_costs = state[:, 1:-k].reshape(-1, k, N) # take just prices - costs
+    self_price = prices_costs[:, :, idx] # gather own series
+    other_prices = np.delete(prices_costs, idx, axis = 2).reshape(-1, k * (N - 1)) # gather rest of series
+    cost_t = np.expand_dims(state[:, 0], 1)
+    past_costs = state[:, -k:]
+    
+    return (self_price, other_prices, cost_t, past_costs)
+
 class ReplayBuffer():
-    def __init__(self, dim_states, N, buffer_size, sample_size):
+    def __init__(self, dim_states, N, k, buffer_size, sample_size):
         
         self.buffer_st = np.zeros((buffer_size, dim_states), dtype = 'float32')
         self.buffer_rt = np.zeros((buffer_size, N), dtype = 'float32')
         self.buffer_at = np.zeros((buffer_size, N), dtype = 'float32')
         self.buffer_st1 = np.zeros((buffer_size, dim_states), dtype = 'float32')
         self.buffer_done = np.zeros(buffer_size, dtype = 'float32')
+        
+        self.N = N
+        self.k = k
         
         self.buffer_size = buffer_size
         self.sample_size = sample_size
@@ -44,9 +57,9 @@ class ReplayBuffer():
         else:
             sample_idxs = np.random.randint(0, self.sample_size, size = self.sample_size)
         
-        return (self.buffer_st[sample_idxs], # states
+        return (split_state(self.buffer_st[sample_idxs]), # states
                 self.buffer_at[sample_idxs][:, idx], # actions
                 self.buffer_rt[sample_idxs][:, idx], # rewards
-                self.buffer_st1[sample_idxs], # states_t1
+                split_state(self.buffer_st1[sample_idxs]), # states_t1
                 self.buffer_done[sample_idxs], # done
                 )
