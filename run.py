@@ -85,7 +85,7 @@ if __name__ == '__main__':
                 env = envs_dict[args['env_name']]
                 env = env(**env_args, timesteps = train_args['timesteps'], dim_actions = dim_actions, random_state = random_state)      
                 
-                agents = [model(dim_states, dim_actions, **agent_args, random_state = random_state + _) for _ in range(env.N)]
+                agents = [model(env_args['N'], env_args['k'], dim_actions, **agent_args, random_state = random_state + agent_idx, agent_idx = agent_idx) for agent_idx in range(env.N)]
                 buffer = ReplayBuffer(dim_states = dim_states, N = env.N, **buffer_args)
                 
                 # train

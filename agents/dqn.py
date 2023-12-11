@@ -5,6 +5,16 @@ from torch.autograd import Variable
 from torch.optim import Adam
 import numpy as np
 
+def split_state(state, N, k, agent_idx):
+    
+    prices_costs = state[:, 1:-k].reshape(-1, k, N) # take just prices - costs
+    self_price = prices_costs[:, :, agent_idx] # gather own series
+    other_prices = np.delete(prices_costs, agent_idx, axis = 2).reshape(-1, k * (N - 1)) # gather rest of series
+    cost_t = np.expand_dims(state[:, 0], 1)
+    past_costs = state[:, -k:]
+    
+    return (self_price, other_prices, cost_t, past_costs)
+
 class DQN(nn.Module):
     def __init__(self, N, k, output_size, hidden_size = 256, num_layers = 2, dropout = 0.1, random_state = 3380):
         super().__init__()
@@ -42,7 +52,7 @@ class DQN(nn.Module):
         return self.fc3(x)
 
 class DQNAgent():
-    def __init__(self, N, k, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, 
+    def __init__(self, N, k, dim_actions, agent_idx, lr = 1e-3, gamma = 0.95, target_steps = 200, 
                  hidden_size = 256, epsilon = 0.9, beta = 5e-5, random_state = 3380):
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -58,6 +68,7 @@ class DQNAgent():
         
         self.N = N
         self.k = k
+        self.agent_idx = agent_idx
         
         # instantiate networks
         self.network = DQN(N, k, dim_actions, hidden_size).to(self.device)
@@ -69,7 +80,8 @@ class DQNAgent():
         
     def select_action(self, state):
 
-        self_price, other_prices, cost_t, past_costs = state
+        state = np.expand_dims(state, axis = 0)
+        self_price, other_prices, cost_t, past_costs = split_state(state, self.N, self.k, self.agent_idx)
         
         self_price = torch.FloatTensor(self_price).to(self.device)
         other_prices = torch.FloatTensor(other_prices).to(self.device)
@@ -89,14 +101,14 @@ class DQNAgent():
     
     def update(self, state, action, reward, state_t1, done):
         
-        self_price, other_prices, cost_t, past_costs = state
+        self_price, other_prices, cost_t, past_costs = split_state(state, self.N, self.k, self.agent_idx)
         self_price = torch.FloatTensor(self_price).to(self.device)
         other_prices = torch.FloatTensor(other_prices).to(self.device)
         cost_t = torch.FloatTensor(cost_t).to(self.device)
         past_costs = torch.FloatTensor(past_costs).to(self.device)
         state = (self_price, other_prices, cost_t, past_costs)
         
-        self_price_t1, other_prices_t1, cost_t_t1, past_costs_t1 = state_t1
+        self_price_t1, other_prices_t1, cost_t_t1, past_costs_t1 = split_state(state_t1, self.N, self.k, self.agent_idx)
         self_price_t1 = torch.FloatTensor(self_price_t1).to(self.device)
         other_prices_t1 = torch.FloatTensor(other_prices_t1).to(self.device)
         cost_t_t1 = torch.FloatTensor(cost_t_t1).to(self.device)

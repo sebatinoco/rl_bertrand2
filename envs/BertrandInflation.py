@@ -4,16 +4,6 @@ from scipy.optimize import minimize, fsolve
 import torch
 from utils.get_inflation_serie import get_inflation_serie
 
-def split_state(state, N, k, idx):
-    
-    prices_costs = state[:, 1:-k].reshape(-1, k, N) # take just prices - costs
-    self_price = prices_costs[:, :, idx] # gather own series
-    other_prices = np.delete(prices_costs, idx, axis = 2).reshape(-1, k * (N - 1)) # gather rest of series
-    cost_t = np.expand_dims(state[:, 0], 1)
-    past_costs = state[:, -k:]
-    
-    return (self_price, other_prices, cost_t, past_costs)
-
 class Scaler:
     def __init__(self, moving_dim, dim):
         self.history = np.zeros((moving_dim, dim))
