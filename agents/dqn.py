@@ -45,18 +45,18 @@ class DQNAgent():
         self.random_state = random_state
         
         # instantiate networks
-        self.network = DQN(dim_states, dim_actions, hidden_size).to(self.device)
-        self.target_network = DQN(dim_states, dim_actions, hidden_size).to(self.device)
+        self.network = DQN(dim_states, dim_actions, hidden_size, random_state=random_state).to(self.device)
+        self.target_network = DQN(dim_states, dim_actions, hidden_size, random_state=random_state).to(self.device)
         
         self.target_network.load_state_dict(self.network.state_dict()) # load target network params
         
         self.optimizer = Adam(self.network.parameters(), lr = lr) # optimizer
         
-    def select_action(self, state):
+    def select_action(self, state, greedy = False):
 
         state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-
-        if np.random.random() > np.exp(-self.beta * self.t):
+        
+        if np.random.random() > np.exp(-self.beta * self.t) or greedy:
             with torch.no_grad():
                 action = torch.argmax(self.network(state), dim = 1).item()
         else:

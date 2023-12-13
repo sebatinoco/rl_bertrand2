@@ -224,3 +224,4 @@ metrics/*.csv
 *.pdf
 #*.txt
 relela_results/
+*.ipynb

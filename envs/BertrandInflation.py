@@ -60,6 +60,7 @@ class BertrandEnv():
         self.random_state = random_state # random state
         self.use_inflation_data = use_inflation_data # use countries inflation data or not
         self.normalize = normalize # normalize data
+        self.debug = debug # for debugging
         
         self.pN = 1.0
         self.pM = 1.5
