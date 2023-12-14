@@ -29,7 +29,8 @@ def get_rolling_std(series, window_size):
 def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize = (8, 4)):
 
     ###########################################
-    df_plot = pd.read_csv(f'{metrics_folder}/{exp_name}.csv', sep = ';', encoding = 'utf-8-sig')
+    path = f'{metrics_folder}/{exp_name}'
+    df_plot = pd.read_csv(f'{path}', sep = ';', encoding = 'utf-8-sig')
     df_avg = pd.DataFrame()
     df_std = pd.DataFrame()
     

@@ -27,7 +27,7 @@ def get_label(file, parameter):
     
     return label
 
-def get_comparison(window_size = 1000, metrics_folder = 'metrics'):
+def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics'):
 
     metrics = os.listdir(f'{metrics_folder}/')
     
@@ -38,8 +38,10 @@ def get_comparison(window_size = 1000, metrics_folder = 'metrics'):
     }
 
     parameters = ['N', 'gamma', 'rho', 'lr', 'k']
-    envs = list(set([metric.split('_')[0] for metric in metrics if '.csv' in metric]))
-    models = list(set([metric.split('_')[1] for metric in metrics if '.csv' in metric]))
+    if envs is None:
+        envs = list(set([metric.split('_')[0] for metric in metrics if '.csv' in metric]))
+    if models is None:
+        models = list(set([metric.split('_')[1] for metric in metrics if '.csv' in metric]))
     for env in envs:
         env_metrics = [metric for metric in metrics if env in metric]
         for model in models:

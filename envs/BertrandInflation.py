@@ -293,7 +293,7 @@ class BertrandEnv():
             if self.use_inflation_data:
                 inflation_t = self.inflation_serie.iloc[self.inflation_count]
                 self.inflation_count += 1
-                if self.inflation_count > len(self.inflation_serie):
+                if self.inflation_count >= len(self.inflation_serie):
                     self.inflation_count = 0
             else:
                 with torch.no_grad():
