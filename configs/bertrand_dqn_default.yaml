@@ -1,7 +1,6 @@
 exp_name: dqn
 model: dqn
 env_name: bertrand
-use_lstm: False
 n_actions: 15
 variation: default
 random_state: 3380

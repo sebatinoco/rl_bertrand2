@@ -78,7 +78,7 @@ class DQNAgent():
         
         self.optimizer = Adam(self.network.parameters(), lr = lr) # optimizer
         
-    def select_action(self, state):
+    def select_action(self, state, greedy = False):
 
         state = np.expand_dims(state, axis = 0)
         self_price, other_prices, cost_t, past_costs = split_state(state, self.N, self.k, self.agent_idx)

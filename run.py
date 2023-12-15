@@ -102,15 +102,29 @@ if __name__ == '__main__':
             print('Failed experiments:', failed_experiments) 
     
     # filter metrics data
-    metrics = [metric.replace('.csv', '') for metric in os.listdir('metrics') if ('.csv' in metric) & ('experiment' not in metric)]
+    metrics = os.listdir('metrics')
+    
+    if filter_env or filter_model or filter_config:
+        env_metrics = [metric for metric in metrics if len(set(filter_env) & set(metric.split('_'))) > 0] or metrics # filter by environment
+        model_metrics = [metric for metric in metrics if len(set(filter_model) & set(metric.split('_'))) > 0] or metrics # filter by env
+        filtered_metrics = [metric for metric in metrics if metric in filter_config] or metrics # filter by config
+        
+        final_metrics = set(env_metrics) & set(model_metrics) & set(filtered_metrics) # filtered configs
+        metrics = [metric for metric in metrics if metric in final_metrics] # filter configs
+
+    #metrics = [metric.replace('.csv', '') for metric in os.listdir('metrics') if ('.csv' in metric) & ('experiment' not in metric)]
+
+    print('Plotting the following experiments: ', metrics)
     
     # plot
     print('generating plots!')
     for metric in tqdm(metrics):
         get_plots(metric, window_size = window_size, metrics_folder = metrics_folder)
 
-    get_comparison(window_size = window_size, metrics_folder = metrics_folder)
-    get_tables()
+    get_comparison(envs = filter_env, models = filter_model, window_size = window_size, metrics_folder = metrics_folder)
+    
+    print('creating tables!')
+    get_tables(envs = filter_env, models = filter_model)
         
     folder_size_mb = get_folder_size('./metrics')
     print(f"Metrics folder size: {folder_size_mb:.2f} MB")

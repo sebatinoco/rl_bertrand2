@@ -1,4 +1,5 @@
 |Delta|p_value
+<<<<<<< HEAD
 bertrand_dqn_rho_2_base_1.csv|0.63|0.0
 bertrand_dqn_rho_1_base_1.csv|0.48|0.0
 bertrand_dqn_train-test_1.csv|0.48|0.0
@@ -14,3 +15,20 @@ bertrand_dqn_lr_2_base_1.csv|0.22|0.92
 bertrand_dqn_N_1_base_1.csv|0.08|0.0
 bertrand_dqn_N_2_base_1.csv|0.01|0.0
 bertrand_dqn_altruist_1.csv|-0.1|0.0
+=======
+bertrand_dqn_rho_2_base_1.csv|0.98|0.0
+bertrand_dqn_train-test_1.csv|0.83|0.0
+bertrand_dqn_k_2_base_1.csv|0.8|0.0
+bertrand_dqn_rho_1_base_1.csv|0.73|0.0
+bertrand_dqn_k_1_base_1.csv|0.65|0.0
+bertrand_dqn_lr_1_base_1.csv|0.58|0.0
+bertrand_dqn_base_1.csv|0.53|0.0
+bertrand_dqn_gamma_2_base_1.csv|0.5|0.0
+bertrand_dqn_gamma_1_base_1.csv|0.42|0.0
+bertrand_dqn_deviate_1.csv|0.34|0.0
+bertrand_dqn_lr_2_base_1.csv|0.33|0.0
+bertrand_dqn_default_1.csv|0.3|0.0
+bertrand_dqn_N_1_base_1.csv|0.26|0.0
+bertrand_dqn_altruist_1.csv|0.06|0.0
+bertrand_dqn_N_2_base_1.csv|-0.01|0.0
+>>>>>>> main

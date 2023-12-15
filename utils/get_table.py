@@ -4,10 +4,12 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import os
 
-def get_tables(percent = 0.1):
+def get_tables(envs = None, models = None, percent = 0.1):
 
-    envs = list(set([metric.split('_')[0] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
-    models = list(set([metric.split('_')[1] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
+    if envs is None:
+        envs = list(set([metric.split('_')[0] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
+    if models is None:
+        models = list(set([metric.split('_')[1] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
 
     for env in envs:
         for model in models:

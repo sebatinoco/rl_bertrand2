@@ -29,7 +29,9 @@ def get_rolling_std(series, window_size):
 def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize = (8, 4)):
 
     ###########################################
-    df_plot = pd.read_csv(f'{metrics_folder}/{exp_name}.csv', sep = ';', encoding = 'utf-8-sig')
+    exp_name = exp_name.replace('.csv','')
+    path = f'{metrics_folder}/{exp_name}.csv'
+    df_plot = pd.read_csv(f'{path}', sep = ';', encoding = 'utf-8-sig')
     df_avg = pd.DataFrame()
     df_std = pd.DataFrame()
     
@@ -62,7 +64,7 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_prices.pdf')
     plt.close()
     
@@ -73,7 +75,7 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_avg_prices.pdf')
     plt.close()
     
@@ -84,7 +86,7 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.plot(df_plot['pi_M'], label = 'Monopoly', color = 'red')
     plt.xlabel('Timesteps')
     plt.ylabel('Profits')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_rewards.pdf')
     plt.close()
     

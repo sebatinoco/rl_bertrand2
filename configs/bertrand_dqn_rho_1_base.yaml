@@ -1,7 +1,6 @@
 exp_name: dqn_rho_1
 model: dqn
 env_name: bertrand
-use_lstm: False
 n_actions: 15
 variation: base
 random_state: 3380
@@ -10,7 +9,7 @@ env: # environment params
   N: 2
   k: 1
   v: 3
-  rho: 0.0003
+  rho: 0.002
   inflation_start: 0
 
 agent: # agent params

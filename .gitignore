@@ -224,3 +224,5 @@ metrics/*.csv
 *.pdf
 #*.txt
 relela_results/
+*.ipynb
+bertrand_dqn_results_3381_random.txt
