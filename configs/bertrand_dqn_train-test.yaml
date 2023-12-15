@@ -3,7 +3,7 @@ model: dqn
 env_name: bertrand
 n_actions: 15
 variation: train-test
-random_state: 3380
+random_state: 3381
 
 env: # environment params
   N: 2

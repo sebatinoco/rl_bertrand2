@@ -4,7 +4,7 @@ env_name: bertrand
 use_lstm: False
 n_actions: 1
 variation: altruist
-random_state: 3380
+random_state: 3381
 
 env: # environment params
   N: 2
