@@ -10,7 +10,7 @@ env: # environment params
   N: 2
   k: 1
   v: 3
-  rho: 0.0002
+  rho: 0.001
   inflation_start: 0
 
 agent: # agent params

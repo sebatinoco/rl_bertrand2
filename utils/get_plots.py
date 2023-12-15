@@ -64,7 +64,7 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_prices.pdf')
     plt.close()
     
@@ -75,7 +75,7 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.plot(df_plot['p_nash'], color = 'green', label = 'Nash')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_avg_prices.pdf')
     plt.close()
     
@@ -86,7 +86,7 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.plot(df_plot['pi_M'], label = 'Monopoly', color = 'red')
     plt.xlabel('Timesteps')
     plt.ylabel('Profits')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_rewards.pdf')
     plt.close()
     

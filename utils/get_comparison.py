@@ -70,7 +70,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 #plt.axhline(0, label = 'Nash profits', color = 'green')
                 plt.xlabel('Timesteps')
                 plt.ylabel('Delta')
-                plt.legend(loc = 'upper right')
+                plt.legend(loc = 'lower right')
                 plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_delta.pdf')
                 plt.close()
                 
