@@ -29,6 +29,7 @@ def get_inflation_serie(start_year: int = 2000, end_year: int = 2020, country: s
 
     if country is None:
         country = random.choice(countries)
+    print(f'using {country} data!')
         
     mask = (df_inflation['Country'] == country) & (df_inflation['date'] > datetime.date(start_year,1,1)) & (df_inflation['date'] < datetime.date(end_year, 1, 1))
     inflation_serie = df_inflation[mask]['inflation'].copy()

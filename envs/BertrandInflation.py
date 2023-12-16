@@ -67,7 +67,7 @@ class BertrandEnv():
         self.rewards_scaler = Scaler(self.moving_dim, dim = self.N)
         
         if use_inflation_data:
-            self.inflation_serie = get_inflation_serie()
+            self.inflation_serie = get_inflation_serie(random_state=random_state)
         
         else:
             assert v >= k, 'v must be greater or equal than k'
