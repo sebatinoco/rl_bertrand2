@@ -97,6 +97,6 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.axhline(0, color = 'green', label = 'Monoply')
     plt.xlabel('Timesteps')
     plt.ylabel('Delta')
-    plt.legend(loc = 'upper right')
+    plt.legend(loc = 'lower right')
     plt.savefig(f'figures/simple_experiments/{exp_name}_delta.pdf')
     plt.close()

@@ -19,6 +19,7 @@ from utils.get_plots import get_plots
 from utils.get_folder_size import get_folder_size
 from utils.get_comparison import get_comparison
 from utils.get_table import get_tables
+from utils.train_test_seed_agents import train_test_seed_agents
 
 models_dict = {'sac': SACAgent, 'ddpg': DDPGAgent, 'dqn': DQNAgent}
 envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
@@ -36,6 +37,7 @@ if __name__ == '__main__':
     nb_experiments = r_args['nb_experiments']
     window_size = r_args['window_size']
     metrics_folder = r_args['metrics_folder']
+    random_state = r_args['random_state']
     device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
     print(f'using {device}!')
     
@@ -95,11 +97,13 @@ if __name__ == '__main__':
                 #    failed_experiments.append(exp_name)
                 train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, **train_args)
                     
-                
             execution_time = time.time() - start_time
 
             print('\n' + f'{execution_time:.2f} seconds -- {(execution_time/60):.2f} minutes -- {(execution_time/3600):.2f} hours') 
             print('Failed experiments:', failed_experiments) 
+    
+        # train agents separatedly
+        train_test_seed_agents(random_state = random_state)
     
     # filter metrics data
     metrics = os.listdir('metrics')

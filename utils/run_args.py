@@ -14,6 +14,7 @@ def run_args():
     parser.add_argument('--train_agents', default = True, type=lambda x: bool(strtobool(x)), help = 'bool to execute training if wanted')
     parser.add_argument('--window_size', default = 1000, type = int, help = 'window size to plot')
     parser.add_argument('--metrics_folder', default = 'metrics', type = str, help = 'metrics folder')
+    parser.add_argument('--random_state', default = 3381, type = int, help = 'seed for experiment')
     
     # consolidate args
     args = parser.parse_args()
