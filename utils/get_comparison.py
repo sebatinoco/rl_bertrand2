@@ -27,7 +27,7 @@ def get_label(file, parameter):
     
     return label
 
-def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics'):
+def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics', percent = 0.1):
 
     metrics = os.listdir(f'{metrics_folder}/')
     
@@ -71,6 +71,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 plt.xlabel('Timesteps')
                 plt.ylabel('Delta')
                 plt.legend(loc = 'lower right')
+                plt.tight_layout()
                 plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_delta.pdf')
                 plt.close()
                 
@@ -90,5 +91,47 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 plt.xlabel('Timesteps')
                 plt.ylabel('Prices')
                 plt.legend(loc = 'lower right')
+                plt.tight_layout()
                 plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_prices.pdf')
+                plt.close()
+                
+                plt.figure(figsize = (8, 4))
+                count = 0
+                for file in final_metrics:
+                    df_metric = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')
+                    tail_percent = int(df_metric.shape[0] * percent)
+                    delta_serie = df_metric['delta'].tail(tail_percent) if percent < 1 else df_metric['delta']
+                    delta_avg = get_rolling(delta_serie, window_size)
+                    last_steps = range(df_metric.shape[0] - tail_percent, df_metric.shape[0])
+                    plt.plot(last_steps, delta_avg, label = get_label(file, parameter), color = colors[count], linewidth = 2.0)
+                    count += 1
+                    
+                plt.plot(last_steps, [1 for i in range(delta_serie.shape[0])], label = 'Monopoly', color = 'red')
+                plt.plot(last_steps, [0 for i in range(delta_serie.shape[0])], label = 'Nash', color = 'green')
+                plt.xlabel('Timesteps')
+                plt.ylabel('Delta')
+                plt.legend(loc = 'lower right')
+                plt.tight_layout()
+                plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_last_delta.pdf')
+                plt.close()
+                
+                plt.figure(figsize = (8, 4))
+                count = 0
+                for file in final_metrics:
+                    df_prices = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')
+                    tail_percent = int(df_prices.shape[0] * percent)
+                    df_prices = df_prices.tail(tail_percent) if percent < 1 else df_prices['delta']
+                    price_cols = [col for col in df_prices.columns if 'prices' in col]
+                    prices_avg = get_rolling(df_prices[price_cols].mean(axis = 1), window_size)
+                    last_steps = range(df_metric.shape[0] - tail_percent, df_metric.shape[0])
+                    plt.plot(last_steps, prices_avg, label = get_label(file, parameter), color = colors[count], linewidth = 2.0)
+                    count += 1
+                    
+                plt.plot(last_steps, df_prices['p_monopoly'], color = 'red', label = 'Monopoly')
+                plt.plot(last_steps, df_prices['p_nash'], color = 'green', label = 'Nash')
+                plt.xlabel('Timesteps')
+                plt.ylabel('Delta')
+                plt.legend(loc = 'lower right')
+                plt.tight_layout()
+                plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_last_prices.pdf')
                 plt.close()
