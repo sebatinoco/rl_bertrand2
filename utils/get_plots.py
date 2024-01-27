@@ -26,7 +26,7 @@ def get_rolling_std(series, window_size):
 
     return rolling_std
 
-def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize = (8, 4)):
+def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize = (8, 4), percent = 0.1):
 
     ###########################################
     exp_name = exp_name.replace('.csv','')
@@ -97,10 +97,26 @@ def get_plots(exp_name, window_size = 500, metrics_folder = 'metrics', figsize =
     plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['delta'], df_std['delta'], errorevery=int(0.01 * series_size), label = f'Average profits')
     plt.axhline(1, color = 'red', label = 'Nash')
-    plt.axhline(0, color = 'green', label = 'Monoply')
+    plt.axhline(0, color = 'green', label = 'Monopoly')
     plt.xlabel('Timesteps')
     plt.ylabel('Delta')
     plt.legend(loc = 'lower right')
     plt.tight_layout()
     plt.savefig(f'figures/simple_experiments/{exp_name}_delta.pdf')
+    plt.close()
+    
+    ############################################
+    
+    tail_percent = int(df_avg.shape[0] * percent)
+    last_steps = range(df_avg.shape[0] - tail_percent, df_avg.shape[0])
+    
+    plt.figure(figsize = figsize)
+    plt.errorbar(last_steps, df_avg['delta'].tail(tail_percent), df_std['delta'].tail(tail_percent), errorevery=int(0.01 * tail_percent), label = f'Average profits')
+    plt.axhline(1, color = 'red', label = 'Nash')
+    plt.axhline(0, color = 'green', label = 'Monopoly')
+    plt.xlabel('Timesteps')
+    plt.ylabel('Delta')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'figures/simple_experiments/{exp_name}_last_delta.pdf')
     plt.close()

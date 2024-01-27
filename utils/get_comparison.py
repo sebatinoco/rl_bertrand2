@@ -27,7 +27,7 @@ def get_label(file, parameter):
     
     return label
 
-def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics', percent = 0.1):
+def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics', percent = 0.1, figsize = (8, 4)):
 
     metrics = os.listdir(f'{metrics_folder}/')
     
@@ -53,7 +53,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 if base_metric in metrics:
                     final_metrics = sorted(final_metrics + [f'{env}_{model}_base_1.csv'])
             
-                plt.figure(figsize = (8, 4))
+                plt.figure(figsize = figsize)
                 count = 0
                 for file in final_metrics:
                     delta_serie = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')['delta']
@@ -75,7 +75,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_delta.pdf')
                 plt.close()
                 
-                plt.figure(figsize = (8, 4))
+                plt.figure(figsize = figsize)
                 count = 0
                 for file in final_metrics:
                     df_prices = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')
@@ -95,7 +95,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_prices.pdf')
                 plt.close()
                 
-                plt.figure(figsize = (8, 4))
+                plt.figure(figsize = figsize)
                 count = 0
                 for file in final_metrics:
                     df_metric = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')
@@ -115,7 +115,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 plt.savefig(f'figures/agg_experiments/{env}_{model}_{parameter}_last_delta.pdf')
                 plt.close()
                 
-                plt.figure(figsize = (8, 4))
+                plt.figure(figsize = figsize)
                 count = 0
                 for file in final_metrics:
                     df_prices = pd.read_csv(f'{metrics_folder}/' + file, sep = ';')

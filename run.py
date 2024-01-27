@@ -67,8 +67,9 @@ if __name__ == '__main__':
                     variation = args['variation']
                     random_state = args['random_state']
 
-                train_args['timesteps'] = 500
-                train_args['episodes'] = 1
+                random_state = 3381
+                #train_args['timesteps'] = 500
+                #train_args['episodes'] = 1
                 
                 # random seed
                 np.random.seed(random_state)

@@ -15,7 +15,7 @@ import pandas as pd
 
 def train_seed_agents(seeds: list):
     
-    for random_state in range(len(seeds)):
+    for random_state in seeds:
 
         envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
         models_dict = {'sac': SACAgent, 'ddpg': DDPGAgent, 'dqn': DQNAgent}
@@ -43,8 +43,8 @@ def train_seed_agents(seeds: list):
 
         exp_name = f'agent_{random_state}'
         episodes = 1
-        #timesteps = train_args['timesteps']
-        timesteps = 2000
+        timesteps = train_args['timesteps']
+        #timesteps = 2000
         update_steps = train_args['update_steps']
         N = env.N
 
