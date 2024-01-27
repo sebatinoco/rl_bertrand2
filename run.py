@@ -19,7 +19,7 @@ from utils.get_plots import get_plots
 from utils.get_folder_size import get_folder_size
 from utils.get_comparison import get_comparison
 from utils.get_table import get_tables
-from utils.train_test_seed_agents import train_test_seed_agents
+from utils.train_test_seed_agents import train_test_seed_agents, plot_train_test
 
 models_dict = {'sac': SACAgent, 'ddpg': DDPGAgent, 'dqn': DQNAgent}
 envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
@@ -127,6 +127,7 @@ if __name__ == '__main__':
         get_plots(metric, window_size = window_size, metrics_folder = metrics_folder)
 
     get_comparison(envs = filter_env, models = filter_model, window_size = window_size, metrics_folder = metrics_folder)
+    plot_train_test(window_size = window_size)
     
     print('creating tables!')
     get_tables(envs = filter_env, models = filter_model)

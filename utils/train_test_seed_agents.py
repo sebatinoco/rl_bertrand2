@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from utils.get_plots import get_rolling, get_rolling_std
 import yaml
 import pandas as pd
+import os
 
 def train_seed_agents(seeds: list):
     
@@ -127,24 +128,8 @@ def train_seed_agents(seeds: list):
         # save agent
         with open(f'models/agent_{random_state}.pkl', 'wb') as file:
             pickle.dump(agents[0], file)
-
-        window_size = 1000
-
-        prices_serie = get_rolling(prices_history[:, 0], window_size)
-        prices_serie_std = get_rolling_std(prices_history[:, 0], window_size)
-
-        series_size = len(prices_serie)
-
-        plt.figure(figsize = (8, 4))
-        plt.errorbar(range(series_size), prices_serie, prices_serie_std, errorevery=int(0.01 * series_size), label = f'Agent 0')
-        plt.plot(monopoly_history, color = 'red', label = 'Monopoly')
-        plt.plot(nash_history, color = 'green', label = 'Nash')
-        plt.xlabel('Timesteps')
-        plt.ylabel('Prices')
-        plt.legend()
-        plt.savefig(f'figures/simple_experiments/bertrand_dqn_agent-{random_state}.pdf')
         
-def test_seed_agents(seeds: list, random_state: int = 500, window_size: int = 1000):
+def test_seed_agents(seeds: list, random_state: int = 500):
 
     envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
 
@@ -170,7 +155,7 @@ def test_seed_agents(seeds: list, random_state: int = 500, window_size: int = 10
             agent = pickle.load(file)
             agents.append(agent)
 
-    exp_name = 'train-test'
+    exp_name = 'test_agents'
     episodes = 1
     timesteps = train_args['timesteps']
     N = env.N
@@ -241,11 +226,51 @@ def test_seed_agents(seeds: list, random_state: int = 500, window_size: int = 10
         results[f'rewards_{agent}'] = rewards_history[:, agent]
         
     results.to_csv(f'metrics/{exp_name}.csv', index = False, sep = ';', encoding = 'utf-8-sig')
+
+def train_test_seed_agents(n_agents: int = 2, random_state: int = 3381):
+    
+    agent_seeds = [random_state + i for i in range(n_agents)]
+    
+    train_seed_agents(seeds = agent_seeds)
+    test_seed_agents(seeds = agent_seeds)
+    
+    
+def plot_train_test(window_size: int = 1000):
+    
+    ## PLOT TRAIN
+
+    agent_metrics = [metric for metric in os.listdir('metrics/') if 'agent_' in metric]
+
+    for metric in agent_metrics:
+
+        df_metric = pd.read_csv(f'metrics/{metric}', sep = ';')
+        random_state = metric.split('_')[1].replace('.csv', '')
+
+        window_size = 1000
+
+        prices_serie = get_rolling(df_metric['prices_0'], window_size)
+        prices_serie_std = get_rolling_std(df_metric['prices_0'], window_size)
+        monopoly_history = df_metric['p_monopoly']
+        nash_history = df_metric['p_nash']
+
+        series_size = len(prices_serie)
+
+        plt.figure(figsize = (8, 4))
+        plt.errorbar(range(series_size), prices_serie, prices_serie_std, errorevery=int(0.01 * series_size), label = f'Agent 0')
+        plt.plot(monopoly_history, color = 'red', label = 'Monopoly')
+        plt.plot(nash_history, color = 'green', label = 'Nash')
+        plt.xlabel('Timesteps')
+        plt.ylabel('Prices')
+        plt.legend()
+        plt.savefig(f'figures/simple_experiments/bertrand_dqn_agent-{random_state}.pdf')
+    
+    
+    ## PLOT TEST
     
     df_avg = pd.DataFrame()
     df_std = pd.DataFrame()
     
-    df_plot = results.copy()
+    df_plot = pd.read_csv('metrics/test_agents.csv', sep = ';', encoding = 'utf-8-sig')
     actions_cols = [col for col in df_plot.columns if 'actions' in col]
     price_cols = [col for col in df_plot.columns if 'prices' in col]
     rewards_cols = [col for col in df_plot.columns if 'rewards' in col]
@@ -289,10 +314,3 @@ def test_seed_agents(seeds: list, random_state: int = 500, window_size: int = 10
     #plt.title('Experiments Results Sample')
     plt.legend(loc = 'lower right')
     plt.savefig('figures/simple_experiments/bertrand_dqn_separate-train-test_1_delta.pdf')
-
-def train_test_seed_agents(n_agents: int = 2, random_state: int = 3381):
-    
-    agent_seeds = [random_state + i for i in range(n_agents)]
-    
-    train_seed_agents(seeds = agent_seeds)
-    test_seed_agents(seeds = agent_seeds)
