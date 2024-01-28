@@ -35,21 +35,13 @@ class ReplayBuffer():
             self.idx += 1    
     
     def sample(self, idx):
-        
+            
         if self.exps_stored < self.sample_size:
             raise ValueError('Not enough samples stored on buffer')
-        
-        if self.sample_size <= self.exps_stored < self.buffer_size:
+        elif self.sample_size < self.exps_stored < self.buffer_size:
             sample_idxs = np.random.randint(0, self.exps_stored, size = self.sample_size)
         else:
-            sample_idxs = np.random.randint(0, self.sample_size, size = self.sample_size)
-            
-        #if self.exps_stored < self.sample_size:
-        #    raise ValueError('Not enough samples stored on buffer')
-        #elif self.sample_size < self.exps_stored < self.buffer_size:
-        #    sample_idxs = np.random.randint(0, self.exps_stored, size = self.sample_size)
-        #else:
-        #    sample_idxs = np.random.randint(0, self.buffer_size, size = self.sample_size)
+            sample_idxs = np.random.randint(0, self.buffer_size, size = self.sample_size)
         
         return (self.buffer_st[sample_idxs], # states
                 self.buffer_at[sample_idxs][:, idx], # actions

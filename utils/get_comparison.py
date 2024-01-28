@@ -27,7 +27,7 @@ def get_label(file, parameter):
     
     return label
 
-def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics', percent = 0.1, figsize = (8, 4)):
+def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder = 'metrics', percent = 0.1, figsize = (6, 4)):
 
     metrics = os.listdir(f'{metrics_folder}/')
     

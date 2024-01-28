@@ -26,7 +26,7 @@ def get_rolling_std(series, window_size):
 
     return rolling_std
 
-def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize = (8, 4), percent = 0.1):
+def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize = (6, 4), percent = 0.1):
 
     ###########################################
     exp_name = exp_name.replace('.csv','')

@@ -235,7 +235,7 @@ def train_test_seed_agents(n_agents: int = 2, random_state: int = 3381):
     test_seed_agents(seeds = agent_seeds)
     
     
-def plot_train_test(window_size: int = 1000):
+def plot_train_test(window_size: int = 1000, figsize = (6, 4)):
     
     ## PLOT TRAIN
 
@@ -255,7 +255,7 @@ def plot_train_test(window_size: int = 1000):
 
         series_size = len(prices_serie)
 
-        plt.figure(figsize = (8, 4))
+        plt.figure(figsize = figsize)
         plt.errorbar(range(series_size), prices_serie, prices_serie_std, errorevery=int(0.01 * series_size), label = f'Agent 0')
         plt.plot(monopoly_history, color = 'red', label = 'Monopoly')
         plt.plot(nash_history, color = 'green', label = 'Nash')
@@ -292,7 +292,7 @@ def plot_train_test(window_size: int = 1000):
     series_size = df_avg.shape[0]
 
     # plot
-    plt.figure(figsize = (8, 4))
+    plt.figure(figsize = figsize)
     for agent in range(n_agents):
         serie = f'prices_{agent}'
         plt.errorbar(range(series_size), df_avg[serie], df_std[serie], errorevery=int(0.01 * series_size), label = f'Agent {agent}')
@@ -305,12 +305,12 @@ def plot_train_test(window_size: int = 1000):
     plt.savefig('figures/simple_experiments/bertrand_dqn_separate-train-test_1_prices.pdf')
     
 
-    plt.figure(figsize = (8, 4))
+    plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['delta'], df_std['delta'], errorevery=int(0.01 * series_size), label = f'Average profits')
     plt.axhline(1, color = 'red', label = 'Nash')
     plt.axhline(0, color = 'green', label = 'Monopoly')
     plt.xlabel('Timesteps')
-    plt.ylabel('Prices')
+    plt.ylabel('Delta')
     #plt.title('Experiments Results Sample')
     plt.legend(loc = 'lower right')
     plt.savefig('figures/simple_experiments/bertrand_dqn_separate-train-test_1_delta.pdf')
