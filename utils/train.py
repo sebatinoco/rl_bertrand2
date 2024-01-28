@@ -49,7 +49,12 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
                     sample = buffer.sample(agent_idx)
                     agent.update(*sample)
             
-            log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t std: {info['std_delta']:.2f}"
+            log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
+            try:
+                epsilon = np.mean(agent.epsilon_history[-1000:])
+                log += f"\t Epsilon: {epsilon:.2f}"
+            except:
+                pass
             sys.stdout.write(log)
             
             ob_t = ob_t1
