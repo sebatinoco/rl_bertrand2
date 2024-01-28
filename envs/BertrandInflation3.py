@@ -39,7 +39,7 @@ class Scaler:
 
 class BertrandEnv():
     def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3,
-                 inflation_start = 0, moving_dim = 10000, max_var = 2.0, use_inflation_data = True,
+                 inflation_start = 0, max_var = 2.0, use_inflation_data = True,
                  dim_actions = 1, random_state = 3380, normalize = True, debug = False):
         
         self.N = N # number of agents
@@ -52,7 +52,7 @@ class BertrandEnv():
         self.v = v # length of past inflations to predict current inflation
         self.timesteps = timesteps # total timesteps
         self.inflation_start = inflation_start # step to start with inflation
-        self.moving_dim = moving_dim # moving window
+        self.moving_dim = int(1 / rho) # moving window
         self.max_var = max_var # max variations
         self.trigger_deviation = False # trigger deviation
         self.altruist = False # altruist actions
@@ -67,7 +67,7 @@ class BertrandEnv():
         self.rewards_scaler = Scaler(self.moving_dim, dim = self.N)
         
         if use_inflation_data:
-            self.inflation_serie = get_inflation_serie(random_state=random_state)
+            self.inflation_serie = get_inflation_serie(random_state=random_state).round(3)
         
         else:
             assert v >= k, 'v must be greater or equal than k'
@@ -157,8 +157,10 @@ class BertrandEnv():
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
         past_prices = (past_prices - past_costs) / past_costs
+        past_inflation = np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T
         
-        ob_t1 = (cost, past_prices, past_costs)
+        #ob_t1 = (cost, past_prices, past_costs)
+        ob_t1 = (inflation, past_prices, past_inflation)
         ob_t1 = np.concatenate([element.flatten() for element in ob_t1])
         if self.normalize:
             ob_t1 = self.obs_scaler.transform(ob_t1)
@@ -168,6 +170,7 @@ class BertrandEnv():
             self.gen_inflation = True
          
         done = False if self.timestep < self.timesteps else True
+        #info = self.get_metric(rewards)
         info = {'avg_delta': self.get_metric(rewards), 'std_delta': np.std(self.metric_history[-1000:])}
         
         self.rewards_history.append(rewards)
@@ -251,11 +254,14 @@ class BertrandEnv():
         self.inflation_history = [0.0] * self.k
         self.scaled_history = np.random.uniform(self.price_low, self.price_high, (self.moving_dim, self.N))
         self.costs_history = [self.c_t] * self.k
+        inflation = 0.0
         
         ob_t = (
-            np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
+            #np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
+            np.array(inflation, ndmin = 2, dtype = 'float32'), 
             (np.array(self.prices_history, ndmin = 2, dtype = 'float32') - self.c_t) / self.c_t, 
-            np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
+            #np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
+            np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T
             )
         
         ob_t = np.concatenate([dim.flatten() for dim in ob_t])

@@ -2,7 +2,8 @@ from agents.dqn import DQNAgent
 from agents.sac import SACAgent
 from agents.ddpg import DDPGAgent
 from envs.LinearBertrandInflation import LinearBertrandEnv
-from envs.BertrandInflation import BertrandEnv
+#from envs.BertrandInflation import BertrandEnv
+from envs.BertrandInflation3 import BertrandEnv
 from replay_buffer import ReplayBuffer
 import numpy as np
 from tqdm import tqdm
@@ -78,7 +79,8 @@ def train_seed_agents(seeds: list):
                         sample = buffer.sample(agent_idx)
                         agent.update(*sample)
                         
-                sys.stdout.write(f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info:.2f}")
+                log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t std: {info['std_delta']:.2f}"
+                sys.stdout.write(log)
                         
                 ob_t = ob_t1
                 
@@ -179,8 +181,9 @@ def test_seed_agents(seeds: list, random_state: int = 500):
             actions = [agent.select_action(ob_t, greedy = True) for agent in agents]
             
             ob_t1, rewards, done, info = env.step(actions)
-                    
-            sys.stdout.write(f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info:.2f}")
+            
+            log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t std: {info['std_delta']:.2f}"
+            sys.stdout.write(log)
                     
             ob_t = ob_t1
             

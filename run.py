@@ -9,7 +9,8 @@ from agents.ddpg import DDPGAgent
 from agents.sac import SACAgent
 from agents.dqn import DQNAgent
 
-from envs.BertrandInflation import BertrandEnv
+#from envs.BertrandInflation import BertrandEnv
+from envs.BertrandInflation3 import BertrandEnv
 from envs.LinearBertrandInflation import LinearBertrandEnv
 
 from replay_buffer import ReplayBuffer
@@ -68,7 +69,7 @@ if __name__ == '__main__':
                     variation = args['variation']
                     random_state = args['random_state']
 
-                random_state = 3381
+                #random_state = 3381
                 #train_args['timesteps'] = 500
                 #train_args['episodes'] = 1
                 

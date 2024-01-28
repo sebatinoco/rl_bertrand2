@@ -44,6 +44,8 @@ class DQNAgent():
         self.t = 0
         self.random_state = random_state
         
+        self.epsilon_history = []
+        
         # instantiate networks
         self.network = DQN(dim_states, dim_actions, hidden_size, random_state=random_state).to(self.device)
         self.target_network = DQN(dim_states, dim_actions, hidden_size, random_state=random_state).to(self.device)
@@ -61,6 +63,8 @@ class DQNAgent():
                 action = torch.argmax(self.network(state), dim = 1).item()
         else:
             action = np.random.randint(0, self.dim_actions)
+            
+        self.epsilon_history += [np.exp(-self.beta * self.t)]
             
         self.t += 1
                 

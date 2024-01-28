@@ -120,3 +120,15 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.tight_layout()
     plt.savefig(f'figures/simple_experiments/{exp_name}_last_delta.pdf')
     plt.close()
+    
+    ############################################
+    
+    plt.figure(figsize = figsize)
+    plt.plot(df_std['delta'], label = 'Delta std')
+    plt.axhline(0, color = 'green', linestyle = '--', label = 'Optimum')
+    plt.xlabel('Timesteps')
+    plt.ylabel('Std')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'figures/simple_experiments/{exp_name}_delta_std.pdf')
+    plt.close()

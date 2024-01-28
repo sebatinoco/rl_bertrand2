@@ -40,8 +40,10 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
     parameters = ['N', 'gamma', 'rho', 'lr', 'k']
     if envs is None:
         envs = list(set([metric.split('_')[0] for metric in metrics if '.csv' in metric]))
+        envs = [env for env in envs if env in ['bertrand', 'linear']]
     if models is None:
         models = list(set([metric.split('_')[1] for metric in metrics if '.csv' in metric]))
+        models = [model for model in models if env in ['dqn', 'sac', 'ddpg']]
     for env in envs:
         env_metrics = [metric for metric in metrics if env in metric]
         for model in models:
@@ -52,7 +54,7 @@ def get_comparison(envs= None, models = None, window_size = 1000, metrics_folder
                 
                 if base_metric in metrics:
                     final_metrics = sorted(final_metrics + [f'{env}_{model}_base_1.csv'])
-            
+                
                 plt.figure(figsize = figsize)
                 count = 0
                 for file in final_metrics:

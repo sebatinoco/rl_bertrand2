@@ -15,6 +15,7 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
     pi_N_history = np.zeros((episodes, timesteps))
     pi_M_history = np.zeros((episodes, timesteps))
     A_history = np.zeros((episodes, timesteps))
+    epsilon_history = np.zeros((episodes, timesteps))
     
     for episode in range(episodes):
         ob_t = env.reset()
@@ -48,7 +49,8 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
                     sample = buffer.sample(agent_idx)
                     agent.update(*sample)
             
-            sys.stdout.write(f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info:.2f}")
+            log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t std: {info['std_delta']:.2f}"
+            sys.stdout.write(log)
             
             ob_t = ob_t1
         
@@ -64,6 +66,10 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
         pi_N_history[episode] = np.array(env.pi_N_history)[-timesteps:]
         pi_M_history[episode] = np.array(env.pi_M_history)[-timesteps:]
         A_history[episode] = np.array(env.A_history)[-timesteps:]
+        try:
+            epsilon_history[episode] = np.array(agent.epsilon_history)[-timesteps:]
+        except:
+            epsilon_history[episode] = np.zeros(timesteps)
     
     # export   
     prices_history = np.mean(prices_history, axis = 0)
@@ -77,6 +83,7 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
     pi_N_history = np.mean(pi_N_history, axis = 0)
     pi_M_history = np.mean(pi_M_history, axis = 0)
     A_history = np.mean(A_history, axis = 0) # equal disposition to pay
+    epsilon_history = np.mean(epsilon_history, axis = 0)
         
     results = pd.DataFrame({'costs': costs_history,
                             'pi_N': pi_N_history,
@@ -85,6 +92,7 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
                             'p_nash': nash_history,
                             'p_monopoly': monopoly_history,
                             'A': A_history,
+                            'epsilon': epsilon_history,
                             })
 
     for agent in range(env.N):
