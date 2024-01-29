@@ -13,17 +13,17 @@ env: # environment params
   inflation_start: 0
 
 agent: # agent params
-  lr: 0.3
+  lr: 0.02
   gamma: 0.95
   hidden_size: 256
 
 buffer: # buffer params
-  sample_size: 512
-  buffer_size: 200_000
+  sample_size: 256
+  buffer_size: 20_000
 
 train: # train params
   episodes: 1
-  timesteps: 250_000
+  timesteps: 500_000
   update_steps: 1
   deviate_start: 0.85
   deviate_end: 0.95

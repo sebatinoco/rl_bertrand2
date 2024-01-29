@@ -41,8 +41,8 @@ def plot_deviate(figsize = (6,4)):
     
     plt.figure(figsize = figsize)
     plt.plot(x_range, delta, label = 'Average profits')
-    plt.axhline(1, color = 'red', label = 'Monopoly')
-    plt.axhline(0, color = 'green', label = 'Nash')
+    plt.axhline(1, color = 'red', label = 'Monopoly', marker = '.')
+    plt.axhline(0, color = 'green', label = 'Nash', marker = '.')
     plt.axvline(deviate_step, color = 'purple', linestyle = '--', label = 'Agent 0 Deviation')
     plt.xlabel('Timesteps')
     plt.ylabel('Prices')

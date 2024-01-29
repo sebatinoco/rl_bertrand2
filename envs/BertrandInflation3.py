@@ -52,7 +52,7 @@ class BertrandEnv():
         self.v = v # length of past inflations to predict current inflation
         self.timesteps = timesteps # total timesteps
         self.inflation_start = inflation_start # step to start with inflation
-        self.moving_dim = int(1 / rho) # moving window
+        self.moving_dim = int(1 / rho) if rho != 0.0 else 1_000 # moving window
         self.max_var = max_var # max variations
         self.trigger_deviation = False # trigger deviation
         self.altruist = False # altruist actions
