@@ -48,14 +48,14 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     df_plot['avg_quantities'] = df_plot[quantities_cols].mean(axis = 1)
     avg_cols = [col for col in df_plot.columns if 'avg' in col]
 
-    window_cols = price_cols + rewards_cols + quantities_cols + avg_cols + ['delta']
+    window_cols = actions_cols + price_cols + rewards_cols + quantities_cols + avg_cols + ['delta']
     for col in window_cols:
         df_avg[col] = get_rolling(df_plot[col], window_size = window_size)
         df_std[col] = get_rolling_std(df_plot[col], window_size = window_size)
         
     series_size = df_avg.shape[0]
         
-    ############################################
+    ############################################ SEPARATE PRICES
     plt.figure(figsize = figsize)
     for agent in range(n_agents):
         serie = f'prices_{agent}'
@@ -69,7 +69,7 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.savefig(f'figures/simple_experiments/{exp_name}_prices.pdf')
     plt.close()
     
-    ############################################
+    ############################################ AVERAGE PRICES
     plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['avg_prices'], df_std['avg_prices'], errorevery=int(0.01 * series_size), label = f'Average prices')
     plt.plot(df_plot['p_monopoly'], color = 'red', label = 'Monopoly')
@@ -81,7 +81,7 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.savefig(f'figures/simple_experiments/{exp_name}_avg_prices.pdf')
     plt.close()
     
-    ############################################
+    ############################################ AVERAGE REWARDS
     plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['avg_rewards'], df_std['avg_rewards'], errorevery=int(0.01 * series_size), label = f'Average profits')
     plt.plot(df_plot['pi_N'], label = 'Nash', color = 'green')
@@ -93,7 +93,7 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.savefig(f'figures/simple_experiments/{exp_name}_rewards.pdf')
     plt.close()
     
-    ############################################
+    ############################################ DELTA
     plt.figure(figsize = figsize)
     plt.errorbar(range(series_size), df_avg['delta'], df_std['delta'], errorevery=int(0.01 * series_size), label = f'Average profits')
     plt.axhline(1, color = 'red', label = 'Nash')
@@ -105,7 +105,7 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.savefig(f'figures/simple_experiments/{exp_name}_delta.pdf')
     plt.close()
     
-    ############################################
+    ############################################ LAST STEPS DELTA
     
     tail_percent = int(df_avg.shape[0] * percent)
     last_steps = range(df_avg.shape[0] - tail_percent, df_avg.shape[0])
@@ -121,7 +121,7 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.savefig(f'figures/simple_experiments/{exp_name}_last_delta.pdf')
     plt.close()
     
-    ############################################
+    ############################################ DELTA DEVIATION
     
     plt.figure(figsize = figsize)
     plt.plot(df_std['delta'], label = 'Delta std')
@@ -131,4 +131,43 @@ def get_plots(exp_name, window_size = 1000, metrics_folder = 'metrics', figsize 
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'figures/simple_experiments/{exp_name}_delta_std.pdf')
+    plt.close()
+    
+    
+    ############################################ ACTIONS
+
+    act2prof = np.linspace(-0.5, 2.0, 15)
+    N_convergence = np.argmax(get_rolling_std(df_plot['delta'], 5_000) <= 0.05)
+
+    plt.figure(figsize = (6, 4))
+    for agent in range(n_agents):
+        prices = df_plot[f'actions_{agent}'].apply(lambda x: act2prof[int(x)])
+        #plt.plot(get_rolling(prices, window_size), label = f'Agent {agent_idx}')
+        plt.errorbar(range(prices.shape[0]), get_rolling(prices, window_size), get_rolling_std(prices, window_size), errorevery=int(0.015 * series_size), label = f'Agent {agent}')
+    plt.axvline(N_convergence, linestyle = '--', color = 'purple', label = 'Convergence')
+    plt.axhline(act2prof[0], linestyle = '--', label = 'Lower Bound', color = 'green')
+    plt.axhline(act2prof[14], linestyle = '--', label = 'Upper Bound', color = 'red')
+    plt.xlabel('Timesteps')
+    plt.ylabel('Expected Profit (%)')
+    plt.legend(loc = 'upper right')
+    plt.tight_layout()
+    plt.savefig(f'figures/simple_experiments/{exp_name}_actions.pdf')
+    plt.close()
+    
+    
+    ############################################ AVERAGE ACTIONS
+
+    act2prof = np.linspace(-0.5, 2.0, 15)
+    N_convergence = np.argmax(get_rolling_std(df_plot['delta'], 5_000) <= 0.05)
+
+    plt.figure(figsize = (6, 4))
+    plt.errorbar(range(df_plot['avg_actions'].shape[0]), get_rolling(df_plot['avg_actions'].apply(lambda x: act2prof[int(x)]), window_size), df_std['avg_actions'], errorevery=int(0.01 * series_size), label = f'Average')
+    plt.axvline(N_convergence, linestyle = '--', color = 'purple', label = 'Convergence')
+    plt.axhline(act2prof[0], linestyle = '--', label = 'Lower Bound', color = 'green')
+    plt.axhline(act2prof[14], linestyle = '--', label = 'Upper Bound', color = 'red')
+    plt.xlabel('Timesteps')
+    plt.ylabel('Expected Profit (%)')
+    plt.legend(loc = 'upper right')
+    plt.tight_layout()
+    plt.savefig(f'figures/simple_experiments/{exp_name}_avg_actions.pdf')
     plt.close()

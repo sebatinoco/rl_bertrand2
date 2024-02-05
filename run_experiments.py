@@ -10,7 +10,7 @@ from agents.sac import SACAgent
 from agents.dqn import DQNAgent
 
 #from envs.BertrandInflation import BertrandEnv
-from envs.BertrandInflation2 import BertrandEnv
+from envs.BertrandInflation3 import BertrandEnv
 from envs.LinearBertrandInflation import LinearBertrandEnv
 
 from replay_buffer import ReplayBuffer
@@ -26,8 +26,8 @@ from utils.plot_deviate import plot_deviate
 models_dict = {'sac': SACAgent, 'ddpg': DDPGAgent, 'dqn': DQNAgent}
 envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
 
-if __name__ == '__main__':
-    
+def test(random_state):
+
     configs = sorted(os.listdir('configs'))
     
     r_args = run_args() 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     nb_experiments = r_args['nb_experiments']
     window_size = r_args['window_size']
     metrics_folder = r_args['metrics_folder']
-    random_state = r_args['random_state']
+    #random_state = r_args['random_state']
     device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
     print(f'using {device}!')
     
@@ -137,3 +137,14 @@ if __name__ == '__main__':
         
     folder_size_mb = get_folder_size('./metrics')
     print(f"Metrics folder size: {folder_size_mb:.2f} MB")
+    
+
+if __name__=='__main__':
+    
+    from tqdm import tqdm
+    import sys
+    
+    nb_experiments = 10
+    for experiment in tqdm(range(nb_experiments)):
+        
+        pass

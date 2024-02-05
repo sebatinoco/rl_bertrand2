@@ -3,7 +3,7 @@ from agents.sac import SACAgent
 from agents.ddpg import DDPGAgent
 from envs.LinearBertrandInflation import LinearBertrandEnv
 #from envs.BertrandInflation import BertrandEnv
-from envs.BertrandInflation3 import BertrandEnv
+from envs.BertrandInflation2 import BertrandEnv
 from replay_buffer import ReplayBuffer
 import numpy as np
 from tqdm import tqdm

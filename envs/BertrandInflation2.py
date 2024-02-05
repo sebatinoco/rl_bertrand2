@@ -38,8 +38,8 @@ class Scaler:
         return (obs - mean) / (std + 1e-8)
 
 class BertrandEnv():
-    def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, P = 1, v = 3,
-                 inflation_start = 0, moving_dim = 10000, max_var = 2.0, use_inflation_data = True,
+    def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3,
+                 inflation_start = 0, max_var = 2.0, use_inflation_data = True,
                  dim_actions = 1, random_state = 3380, normalize = True, debug = False):
         
         self.N = N # number of agents
@@ -49,11 +49,10 @@ class BertrandEnv():
         self.mu = mu # horizontal differentiation index
         self.A = np.array([A] * N) # vertical differentiation index
         self.c = c # marginal cost
-        self.P = P
         self.v = v # length of past inflations to predict current inflation
         self.timesteps = timesteps # total timesteps
         self.inflation_start = inflation_start # step to start with inflation
-        self.moving_dim = moving_dim # moving window
+        self.moving_dim = int(1 / rho) if rho != 0.0 else 1_000 # moving window
         self.max_var = max_var # max variations
         self.trigger_deviation = False # trigger deviation
         self.altruist = False # altruist actions
@@ -62,13 +61,14 @@ class BertrandEnv():
         self.use_inflation_data = use_inflation_data # use countries inflation data or not
         self.normalize = normalize # normalize data
         self.debug = debug # for debugging
+        self.xi = 0.1
         
         self.pN = 1.0
         self.pM = 1.5
         self.rewards_scaler = Scaler(self.moving_dim, dim = self.N)
         
         if use_inflation_data:
-            self.inflation_serie = get_inflation_serie(random_state=random_state)
+            self.inflation_serie = get_inflation_serie(random_state=random_state).round(3)
         
         else:
             assert v >= k, 'v must be greater or equal than k'
@@ -84,15 +84,15 @@ class BertrandEnv():
             
             assert len(self.A_t) == len(p), "a must be equal size to p"
 
-            sum_denominator = np.exp(self.a_0 / (self.mu * self.P_t))
+            sum_denominator = np.exp(self.a_0 / self.mu)
             for i in range(len(p)):
-                sum_denominator += np.exp((self.A_t[i] - p[i]) / (self.mu * self.P_t))
+                sum_denominator += np.exp((self.A_t[i] - p[i]) / self.mu)
 
             result = []
             for i in range(len(p)):
-                first_term = np.exp((self.A_t[i] - p[i]) / (self.mu * self.P_t)) / sum_denominator
-                second_term = (np.exp((self.A_t[i] - p[i]) / (self.mu * self.P_t)) * (p[i] - self.c_t)) / (self.mu * self.P_t * sum_denominator)
-                third_term = (p[i] - self.c_t) / (self.mu * self.P_t)
+                first_term = np.exp((self.A_t[i] - p[i]) / self.mu) / sum_denominator
+                second_term = (np.exp((self.A_t[i] - p[i]) / self.mu) * (p[i] - self.c_t)) / (self.mu * sum_denominator)
+                third_term = (p[i] - self.c_t) / self.mu
 
                 fn = first_term * (1 + second_term - third_term)
                 result.append(fn)
@@ -111,7 +111,7 @@ class BertrandEnv():
     def get_monopoly(self):
         
         def monopoly(p):
-            return -(p - self.c_t) * self.demand(p, self.A_t, self.P_t)
+            return -(p - self.c_t) * self.demand(p, self.A_t)
         
         pM = minimize(monopoly, x0 = self.pM).x[0] # float
 
@@ -136,7 +136,7 @@ class BertrandEnv():
             actions[0] = self.pN
         
         # compute quantities
-        quantities = self.demand(actions, self.A_t, self.P_t)
+        quantities = self.demand(actions, self.A_t)
         self.quantities_history.append(quantities)
         # intrinsic reward: (p - c) * q
         rewards = [(actions[agent] - self.c_t) * quantities[agent] for agent in range(self.N)]
@@ -158,8 +158,10 @@ class BertrandEnv():
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
         past_prices = (past_prices - past_costs) / past_costs
+        past_inflation = np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T
         
-        ob_t1 = (cost, past_prices, past_costs)
+        #ob_t1 = (cost, past_prices, past_costs)
+        ob_t1 = (inflation, past_prices, past_inflation)
         ob_t1 = np.concatenate([element.flatten() for element in ob_t1])
         if self.normalize:
             ob_t1 = self.obs_scaler.transform(ob_t1)
@@ -169,7 +171,8 @@ class BertrandEnv():
             self.gen_inflation = True
          
         done = False if self.timestep < self.timesteps else True
-        info = self.get_metric(rewards)
+        #info = self.get_metric(rewards)
+        info = {'avg_delta': self.get_metric(rewards), 'std_delta': np.std(self.metric_history[-1000:])}
         
         self.rewards_history.append(rewards)
         if self.debug:
@@ -207,18 +210,22 @@ class BertrandEnv():
         self.pN = self.get_nash() # get nash price
         self.pM = self.get_monopoly() # get monopoly price
         
-        self.pi_N = (self.pN - self.c) * self.demand([self.pN], self.A_t, self.P_t)[0]
-        self.pi_M = (self.pM - self.c) * self.demand([self.pM], self.A_t, self.P_t)[0]
+        self.pi_N = (self.pN - self.c) * self.demand([self.pN], self.A_t)[0]
+        self.pi_M = (self.pM - self.c) * self.demand([self.pM], self.A_t)[0]
         
         self.pi_N_history += [self.pi_N]
         self.pi_M_history += [self.pi_M]
 
         assert self.pi_M > self.pi_N, f'monopoly profits should be higher than nash profits: {self.pi_N} vs {self.pi_M}'
         
-        self.action_range = [-0.5, self.max_var]
+        #self.action_range = [-0.5, self.max_var]
+        self.action_range = [self.pN * (1 - self.xi), self.pM * (1 + self.xi)]
         
-        self.price_high = np.max([0, self.c_t * (1 + self.action_range[1])])
-        self.price_low = np.max([0, self.c_t * (1 + self.action_range[0])])
+        #self.price_high = np.max([0, self.c_t * (1 + self.action_range[1])])
+        #self.price_low = np.max([0, self.c_t * (1 + self.action_range[0])])
+        
+        self.price_high = np.max([0, self.action_range[1]])
+        self.price_low = np.max([0, self.action_range[0]])
     
     def reset(self):
         
@@ -230,7 +237,6 @@ class BertrandEnv():
         self.gen_inflation = False
         self.A_t = self.A
         self.c_t = self.c
-        self.P_t = self.P
         self.timestep = 0
         self.inflation_count = 0
         
@@ -253,11 +259,14 @@ class BertrandEnv():
         self.inflation_history = [0.0] * self.k
         self.scaled_history = np.random.uniform(self.price_low, self.price_high, (self.moving_dim, self.N))
         self.costs_history = [self.c_t] * self.k
+        inflation = 0.0
         
         ob_t = (
-            np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
+            #np.array(self.c_t, ndmin = 2, dtype = 'float32'), 
+            np.array(inflation, ndmin = 2, dtype = 'float32'), 
             (np.array(self.prices_history, ndmin = 2, dtype = 'float32') - self.c_t) / self.c_t, 
-            np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
+            #np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
+            np.array(self.inflation_history[-self.k:], ndmin = 2, dtype = 'float32').T
             )
         
         ob_t = np.concatenate([dim.flatten() for dim in ob_t])
@@ -269,16 +278,16 @@ class BertrandEnv():
             self.state_history += [ob_t]
         return ob_t
     
-    def demand(self, prices, A, P):
+    def demand(self, prices, A):
 
         '''
         Returns the sold quantity in function of the vertical and horizontal differentiation, given the prices set.
         prices: Array of prices offered by agents (np.array)
         '''
 
-        denominator = np.sum(np.exp((A - prices) / (self.mu * P))) + np.exp(self.a_0 / (self.mu * P))
+        denominator = np.sum(np.exp((A - prices) / self.mu)) + np.exp(self.a_0 / self.mu)
 
-        quantities = [np.exp((A[agent] - prices[agent]) / (self.mu * P)) / denominator for agent in range(len(prices))]
+        quantities = [np.exp((A[agent] - prices[agent]) / self.mu) / denominator for agent in range(len(prices))]
 
         return quantities
     
@@ -304,19 +313,18 @@ class BertrandEnv():
                     inflation_values = torch.tensor(inflation_values).reshape(1, -1, 1).float()
                     inflation_t = float(self.inflation_model(inflation_values).squeeze())
             
-            #dc = self.c_t * (inflation_t)
+            dc = self.c_t * (inflation_t)
             
-            #self.c_t += dc # adjust marginal cost
-            #self.A_t = np.array([A + dc for A in self.A_t]) # dc = da
-            self.c_t = self.c_t * (1 + inflation_t)
-            self.A_t = self.A_t * (1 + inflation_t)
-            self.P_t = self.P_t * (1 + inflation_t)
+            self.c_t += dc # adjust marginal cost
+            self.A_t = np.array([A + dc for A in self.A_t]) # dc = da
             
             self.pN = self.get_nash() # get nash price
             self.pM = self.get_monopoly() # get monopoly price
             
-            self.pi_N = (self.pN - self.c_t) * self.demand([self.pN], self.A_t, self.P_t)[0]
-            self.pi_M = (self.pM - self.c_t) * self.demand([self.pM], self.A_t, self.P_t)[0]
+            self.pi_N = (self.pN - self.c_t) * self.demand([self.pN], self.A_t)[0]
+            self.pi_M = (self.pM - self.c_t) * self.demand([self.pM], self.A_t)[0]
+            
+            self.action_range = [self.pN * (1 - self.xi), self.pM * (1 + self.xi)]
 
             #assert self.pi_M > self.pi_N, f'monopoly profits should be higher than nash profits: {self.pi_N} vs {self.pi_M}'
             
@@ -339,13 +347,15 @@ class BertrandEnv():
             # dict between 0.5 and delta
             self.prices_dict = np.linspace(self.action_range[0], self.action_range[1], self.dim_actions)
             
-            scaled_action = self.prices_dict[action] * self.c_t
+            #scaled_action = self.prices_dict[action] * self.c_t
+            scaled_action = self.prices_dict[action]
         else:
             action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
             
             scaled_action = action * self.c_t # variations over cost
         
-        return np.max([scaled_action + self.c_t, 0.0])
+        #return np.max([scaled_action + self.c_t, 0.0])
+        return np.max([scaled_action, 0.0])
     
     def get_metric(self, rewards, window = 1000):
         
