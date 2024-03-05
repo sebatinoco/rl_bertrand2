@@ -9,8 +9,8 @@ from agents.ddpg import DDPGAgent
 from agents.sac import SACAgent
 from agents.dqn import DQNAgent
 
-#from envs.BertrandInflation import BertrandEnv
-from envs.BertrandInflation2 import BertrandEnv
+from envs.BertrandInflation import BertrandEnv
+#from envs.BertrandInflation2 import BertrandEnv
 from envs.LinearBertrandInflation import LinearBertrandEnv
 
 from replay_buffer import ReplayBuffer
@@ -70,8 +70,8 @@ if __name__ == '__main__':
                     random_state = args['random_state']
 
                 #random_state = 3381
-                #train_args['timesteps'] = 500
-                #train_args['episodes'] = 1
+                train_args['timesteps'] = 500
+                train_args['episodes'] = 1
                 
                 # random seed
                 np.random.seed(random_state)
@@ -106,10 +106,10 @@ if __name__ == '__main__':
             print('Failed experiments:', failed_experiments) 
     
         # train agents separatedly
-        train_test_seed_agents(random_state = random_state)
+        train_test_seed_agents(random_state = random_state, timesteps = train_args['timesteps'])
     
     # filter metrics data
-    metrics = os.listdir('metrics')
+    metrics = os.listdir('metrics/single')
     
     if filter_env or filter_model or filter_config:
         env_metrics = [metric for metric in metrics if len(set(filter_env) & set(metric.split('_'))) > 0] or metrics # filter by environment
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     plot_deviate()
     
     print('creating tables!')
-    get_tables(envs = filter_env, models = filter_model)
+    get_tables(envs = filter_env, models = filter_model, window_size = window_size)
         
     folder_size_mb = get_folder_size('./metrics')
     print(f"Metrics folder size: {folder_size_mb:.2f} MB")

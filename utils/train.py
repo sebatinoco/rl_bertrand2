@@ -2,7 +2,24 @@ import sys
 import numpy as np
 import pandas as pd
 
-def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, deviate_start, deviate_end, test_size, exp_name = 'experiment'):
+def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
+          deviate_start, deviate_end, test_size, exp_name = 'experiment', 
+          debug = False, robust = False):
+
+    '''
+    Performs a rollout of an experiment. Trains agents and store results as a csv.
+    env: environment of experiment
+    agents: list of agents to play the environment
+    buffer: replay buffer
+    N: number of agents
+    episodes: number of episodes
+    timesteps: number of timesteps of each experiment
+    update_steps: number of steps to perform update
+    variation: variation of the experiment
+    deviate_start: percent of experiment to start the deviation
+    deviate_end: percent of experiment to end the deviation
+    test_size: test size to perform actions without update
+    '''
     
     prices_history = np.zeros((episodes, timesteps, N))
     actions_history = np.zeros((episodes, timesteps, N))
@@ -90,20 +107,30 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
     A_history = np.mean(A_history, axis = 0) # equal disposition to pay
     epsilon_history = np.mean(epsilon_history, axis = 0)
         
-    results = pd.DataFrame({'costs': costs_history,
-                            'pi_N': pi_N_history,
-                            'pi_M': pi_M_history,
-                            'delta': delta_history,
-                            'p_nash': nash_history,
-                            'p_monopoly': monopoly_history,
-                            'A': A_history,
-                            'epsilon': epsilon_history,
-                            })
+    if debug:
+        results = pd.DataFrame({'costs': costs_history,
+                                'pi_N': pi_N_history,
+                                'pi_M': pi_M_history,
+                                'delta': delta_history,
+                                'p_nash': nash_history,
+                                'p_monopoly': monopoly_history,
+                                'A': A_history,
+                                'epsilon': epsilon_history,
+                                })
+        
+    else:
+        results = pd.DataFrame({
+                                'delta': delta_history,
+                                'p_nash': nash_history,
+                                'p_monopoly': monopoly_history,
+                                })
 
     for agent in range(env.N):
         results[f'actions_{agent}'] = actions_history[:, agent]
         results[f'prices_{agent}'] = prices_history[:, agent]
-        results[f'quantities_{agent}'] = quantities_history[:, agent]
-        results[f'rewards_{agent}'] = rewards_history[:, agent]
-        
-    results.to_csv(f'metrics/{exp_name}.csv', index = False, sep = ';', encoding = 'utf-8-sig')
+        if debug:
+            results[f'quantities_{agent}'] = quantities_history[:, agent]
+            results[f'rewards_{agent}'] = rewards_history[:, agent]
+    
+    save_path = f'metrics/robust/{exp_name}.csv' if robust else f'metrics/single/{exp_name}.csv'
+    results.to_csv(save_path, index = False, sep = ';', encoding = 'utf-8-sig')

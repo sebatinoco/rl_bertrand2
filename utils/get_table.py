@@ -8,22 +8,22 @@ from utils.get_plots import get_rolling, get_rolling_std
 def get_tables(envs = None, models = None, window_size = 1000, percent = 0.1):
 
     if envs is None:
-        envs = list(set([metric.split('_')[0] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
+        envs = list(set([metric.split('_')[0] for metric in os.listdir('metrics/single') if '.gitignore' not in metric]))
     if models is None:
-        models = list(set([metric.split('_')[1] for metric in os.listdir('metrics') if '.gitignore' not in metric]))
+        models = list(set([metric.split('_')[1] for metric in os.listdir('metrics/single') if '.gitignore' not in metric]))
 
     for env in envs:
         for model in models:
-            metrics = os.listdir('metrics')
+            metrics = os.listdir('metrics/single')
             #metrics = [metric for metric in metrics if (env in metric and model in metric) and ('altruist' not in metric) and ('deviate' not in metric)]
             metrics = [metric for metric in metrics if (env in metric and model in metric)]
 
-            delta_base = pd.read_csv(f'metrics/{env}_{model}_base_1.csv', sep = ';')['delta']
+            delta_base = pd.read_csv(f'metrics/single/{env}_{model}_base_1.csv', sep = ';')['delta']
             delta_base = delta_base.tail(int(delta_base.shape[0] * percent))
 
             results = {}
             for metric in metrics:
-                df_metric = pd.read_csv(f'metrics/{metric}', sep = ';')
+                df_metric = pd.read_csv(f'metrics/single/{metric}', sep = ';')
                 price_cols = [col for col in df_metric.columns if 'prices' in col]
                 df_metric['price_avg'] = get_rolling(df_metric[price_cols].mean(axis = 1), window_size)            
                 

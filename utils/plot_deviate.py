@@ -9,7 +9,7 @@ def plot_deviate(figsize = (6,4)):
         args = yaml.safe_load(file)
         deviate_start = args['train']['deviate_start']
 
-    df = pd.read_csv('metrics/bertrand_dqn_deviate_1.csv', sep = ';')
+    df = pd.read_csv('metrics/single/bertrand_dqn_deviate_1.csv', sep = ';')
 
     prices_0 = df['prices_0']
     prices_1 = df['prices_1']

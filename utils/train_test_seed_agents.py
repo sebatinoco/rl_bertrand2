@@ -15,7 +15,7 @@ import yaml
 import pandas as pd
 import os
 
-def train_seed_agents(seeds: list):
+def train_seed_agents(seeds: list, timesteps = None):
     
     for random_state in seeds:
 
@@ -45,7 +45,8 @@ def train_seed_agents(seeds: list):
 
         exp_name = f'agent_{random_state}'
         episodes = 1
-        timesteps = train_args['timesteps']
+        if timesteps is None:
+            timesteps = train_args['timesteps']
         #timesteps = 2000
         update_steps = train_args['update_steps']
         N = env.N
@@ -130,13 +131,13 @@ def train_seed_agents(seeds: list):
             results[f'quantities_{agent}'] = quantities_history[:, agent]
             results[f'rewards_{agent}'] = rewards_history[:, agent]
             
-        results.to_csv(f'metrics/{exp_name}.csv', index = False, sep = ';', encoding = 'utf-8-sig')
+        results.to_csv(f'metrics/single/{exp_name}.csv', index = False, sep = ';', encoding = 'utf-8-sig')
 
         # save agent
         with open(f'models/agent_{random_state}.pkl', 'wb') as file:
             pickle.dump(agents[0], file)
         
-def test_seed_agents(seeds: list, random_state: int = 500):
+def test_seed_agents(seeds: list, random_state: int = 500, timesteps = None):
 
     envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
 
@@ -164,7 +165,8 @@ def test_seed_agents(seeds: list, random_state: int = 500):
 
     exp_name = 'test_agents'
     episodes = 1
-    timesteps = train_args['timesteps']
+    if timesteps is None:
+        timesteps = train_args['timesteps']
     N = env.N
 
     prices_history = np.zeros((episodes, timesteps, N))
@@ -238,28 +240,26 @@ def test_seed_agents(seeds: list, random_state: int = 500):
         results[f'quantities_{agent}'] = quantities_history[:, agent]
         results[f'rewards_{agent}'] = rewards_history[:, agent]
         
-    results.to_csv(f'metrics/{exp_name}.csv', index = False, sep = ';', encoding = 'utf-8-sig')
+    results.to_csv(f'metrics/single/{exp_name}.csv', index = False, sep = ';', encoding = 'utf-8-sig')
 
-def train_test_seed_agents(n_agents: int = 2, random_state: int = 3381):
+def train_test_seed_agents(n_agents: int = 2, random_state: int = 3381, timesteps = None):
     
     agent_seeds = [random_state + i for i in range(n_agents)]
     
-    train_seed_agents(seeds = agent_seeds)
-    test_seed_agents(seeds = agent_seeds)
+    train_seed_agents(seeds = agent_seeds, timesteps=timesteps)
+    test_seed_agents(seeds = agent_seeds, timesteps=timesteps)
     
     
 def plot_train_test(window_size: int = 1000, figsize = (6, 4)):
     
     ## PLOT TRAIN
 
-    agent_metrics = [metric for metric in os.listdir('metrics/') if 'agent_' in metric]
+    agent_metrics = [metric for metric in os.listdir('metrics/single') if 'agent_' in metric]
 
     for metric in agent_metrics:
 
-        df_metric = pd.read_csv(f'metrics/{metric}', sep = ';')
+        df_metric = pd.read_csv(f'metrics/single/{metric}', sep = ';')
         random_state = metric.split('_')[1].replace('.csv', '')
-
-        window_size = 1000
 
         prices_serie = get_rolling(df_metric['prices_0'], window_size)
         prices_serie_std = get_rolling_std(df_metric['prices_0'], window_size)
@@ -283,7 +283,7 @@ def plot_train_test(window_size: int = 1000, figsize = (6, 4)):
     df_avg = pd.DataFrame()
     df_std = pd.DataFrame()
     
-    df_plot = pd.read_csv('metrics/test_agents.csv', sep = ';', encoding = 'utf-8-sig')
+    df_plot = pd.read_csv('metrics/single/test_agents.csv', sep = ';', encoding = 'utf-8-sig')
     actions_cols = [col for col in df_plot.columns if 'actions' in col]
     price_cols = [col for col in df_plot.columns if 'prices' in col]
     rewards_cols = [col for col in df_plot.columns if 'rewards' in col]
