@@ -30,7 +30,7 @@ envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
 if __name__ == '__main__':
     
     configs = sorted(os.listdir('configs'))
-    
+
     r_args = run_args() 
     
     train_agents = r_args['train_agents']
@@ -45,12 +45,20 @@ if __name__ == '__main__':
     device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
     print(f'using {device}!')
         
+    if filter_env or filter_model or filter_config:
+        env_configs = [config for config in configs if len(set(filter_env) & set(config.split('_'))) > 0] or configs # filter by environment
+        model_configs = [config for config in configs if len(set(filter_model) & set(config.split('_'))) > 0] or configs # filter by env
+        filtered_configs = [config for config in configs if config in filter_config] or configs # filter by config
+        
+        final_configs = set(env_configs) & set(model_configs) & set(filtered_configs) # filtered configs
+        configs = [config for config in configs if config in final_configs] # filter configs
+
     failed_experiments = []
 
     # base seed
     np.random.seed(random_state)
 
-    for config in ['bertrand_dqn_base.yaml', 'bertrand_dqn_default.yaml']:
+    for config in configs:
         # load config
         with open(f"configs/{config}", 'r') as file:
             args = yaml.safe_load(file)
