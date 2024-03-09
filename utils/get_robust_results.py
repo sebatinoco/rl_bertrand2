@@ -12,7 +12,7 @@ def get_robust_results(config, timesteps):
 
     delta_data = np.zeros((timesteps, nb_experiments))
     for experiment in range(nb_experiments):
-        data = pd.read_csv(f'metrics/robust/{config}_{experiment + 1}.csv', sep = ';')
+        data = pd.read_parquet(f'metrics/robust/{config}_{experiment + 1}.parquet')
         rolling_delta = get_rolling(data['delta'], window_size = 10)
         delta_data[:, experiment] = rolling_delta
 

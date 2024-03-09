@@ -31,9 +31,9 @@ class DQN(nn.Module):
 
 class DQNAgent():
     def __init__(self, dim_states, dim_actions, lr = 1e-3, gamma = 0.95, target_steps = 200, 
-                 hidden_size = 256, epsilon = 0.9, beta = 5e-5, random_state = 3380):
+                 hidden_size = 256, epsilon = 0.9, beta = 5e-5, random_state = 3380, device = "cuda:0"):
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(device if torch.cuda.is_available() else "cpu")
         
         self.dim_actions = dim_actions
         self.gamma = gamma

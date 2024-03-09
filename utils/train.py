@@ -1,10 +1,11 @@
 import sys
 import numpy as np
 import pandas as pd
+import pickle
 
 def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
           deviate_start, deviate_end, test_size, exp_name = 'experiment', 
-          debug = False, robust = False):
+          debug = False, robust = False, store_steps = 10_000):
 
     '''
     Performs a rollout of an experiment. Trains agents and store results as a csv.
@@ -65,6 +66,11 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
                     agent = agents[agent_idx]
                     sample = buffer.sample(agent_idx)
                     agent.update(*sample)
+
+            if t % store_steps == 0:
+                # save agent
+                with open(f'models/{exp_name}_{t}.pkl', 'wb') as file:
+                    pickle.dump(agents[0], file)
             
             log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
             try:
@@ -132,5 +138,5 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
             results[f'quantities_{agent}'] = quantities_history[:, agent]
             results[f'rewards_{agent}'] = rewards_history[:, agent]
     
-    save_path = f'metrics/robust/{exp_name}.csv' if robust else f'metrics/single/{exp_name}.csv'
-    results.to_csv(save_path, index = False, sep = ';', encoding = 'utf-8-sig')
+    save_path = f'metrics/robust/{exp_name}.parquet' if robust else f'metrics/single/{exp_name}.parquet'
+    results.to_parquet(save_path, index = False)

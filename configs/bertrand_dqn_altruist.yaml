@@ -23,7 +23,7 @@ buffer: # buffer params
 
 train: # train params
   episodes: 1
-  timesteps: 500_000
+  timesteps: 400_000
   update_steps: 1
   deviate_start: 0.85
   deviate_end: 0.95

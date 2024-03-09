@@ -4,6 +4,7 @@ import torch
 import time
 from tqdm import tqdm
 import numpy as np
+import shutil
 
 from agents.ddpg import DDPGAgent
 from agents.sac import SACAgent
@@ -57,7 +58,7 @@ if __name__ == '__main__':
 
     # base seed
     np.random.seed(random_state)
-
+    seeds = np.random.randint(0, 100_000, nb_experiments)
     for config in configs:
         # load config
         with open(f"configs/{config}", 'r') as file:
@@ -74,7 +75,7 @@ if __name__ == '__main__':
             train_args['timesteps'] = 500
 
             # random seed
-            random_seed = np.random.randint(10_000)
+            random_seed = int(seeds[experiment_idx - 1])
 
             # set experiment name
             exp_name = f"{args['env_name']}_{args['exp_name']}_{variation}_{experiment_idx}"
@@ -90,10 +91,14 @@ if __name__ == '__main__':
             env = envs_dict[args['env_name']]
             env = env(**env_args, timesteps = train_args['timesteps'], dim_actions = dim_actions, random_state = random_seed)      
             
-            agents = [model(dim_states, dim_actions, **agent_args, random_state = random_seed + _) for _ in range(env.N)]
+            agents = [model(dim_states, dim_actions, **agent_args, random_state = random_seed + _, device = device) for _ in range(env.N)]
             buffer = ReplayBuffer(dim_states = dim_states, N = env.N, **buffer_args)
             
             # train
             train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, debug=debug, robust=True, **train_args)
 
         get_robust_results(config, train_args['timesteps'])
+
+    # move to export folder
+    shutil.make_archive("export/metrics", "zip", "metrics")
+    shutil.make_archive("export/models", "zip", "models")
