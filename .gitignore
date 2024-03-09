@@ -230,3 +230,4 @@ wandb
 .env
 *.pkl
 *.zip
+*.parquet
