@@ -1,4 +1,4 @@
-exp_name: dqn
+exp_name: dqn_base
 model: dqn
 env_name: bertrand
 n_actions: 15

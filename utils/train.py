@@ -70,7 +70,7 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
             if t % store_steps == 0:
                 # save agent
                 with open(f'models/{exp_name}_{t}.pkl', 'wb') as file:
-                    pickle.dump(agents[0], file)
+                    pickle.dump(agents[0].network, file)
             
             log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
             try:

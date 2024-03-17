@@ -231,3 +231,4 @@ wandb
 *.pkl
 *.zip
 *.parquet
+*.txt

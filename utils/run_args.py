@@ -16,6 +16,7 @@ def run_args():
     parser.add_argument('--metrics_folder', default = 'metrics/single', type = str, help = 'metrics folder')
     parser.add_argument('--random_state', default = 3381, type = int, help = 'seed for experiment')
     parser.add_argument('--debug', default = False, type=lambda x: bool(strtobool(x)), help = 'bool to debug training if wanted')
+    parser.add_argument('--get_test', default = True, type=lambda x: bool(strtobool(x)), help = 'bool to get test results if wanted')
     
     # consolidate args
     args = parser.parse_args()

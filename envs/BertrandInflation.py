@@ -132,7 +132,7 @@ class BertrandEnv():
             actions[0] = self.pN
             
         if self.altruist:
-            actions[0] = self.pN
+            actions[1] = self.pN
         
         # compute quantities
         quantities = self.demand(actions, self.A_t)
