@@ -40,7 +40,7 @@ class Scaler:
 class BertrandEnv():
     def __init__(self, N, k, rho, timesteps, mu = 0.25, a_0 = 0, A = 2, c = 1, v = 3,
                  inflation_start = 0, max_var = 2.0, use_inflation_data = True,
-                 dim_actions = 1, random_state = 3380, normalize = True, debug = False, beta = 5e-5):
+                 dim_actions = 15, random_state = 3380, normalize = True, debug = False, beta = 5e-5):
         
         self.N = N # number of agents
         self.k = k # past periods to observe
@@ -171,7 +171,11 @@ class BertrandEnv():
          
         done = False if self.timestep < self.timesteps else True
         #info = self.get_metric(rewards)
-        info = {'avg_delta': self.get_metric(rewards), 'std_delta': np.std(self.metric_history[-1000:])}
+        info = {'avg_delta': self.get_metric(rewards), 
+                'std_delta': np.std(self.metric_history[-1000:]),
+                'avg_actions': np.mean(self.action_history[-1000:]),
+                'std_actions': np.std(self.action_history[-1000:]),
+                }
         
         if self.debug:
             self.state_history += [ob_t1]

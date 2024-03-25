@@ -89,7 +89,7 @@ def test_agents(env, agents, timesteps = 400_000, exp_name = 'default', n_bins =
         ob_t1, rewards, done, info = env.step(actions)
         ob_t = ob_t1
 
-        log = f"\rExperiment: {exp_name} \t Episode completion: {100 * timestep/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
+        log = f"\rExperiment: {exp_name} \t Episode completion: {100 * timestep/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f} \t Avg Actions: {info['avg_actions']:.2f}"
         sys.stdout.write(log)
         
     delta_history = np.array(env.metric_history)[-timesteps:]
@@ -164,7 +164,7 @@ def get_test_results(test_timesteps = 400_000, n_intervals = 10, n_pairs = 30, r
         std_actions_curve = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
         for interval in intervals: # for each interval
             avg_delta_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)} 
-            std_delta_metrics ={str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
+            std_delta_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
             avg_actions_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
             std_actions_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
             for pair_idx in range(len(pairs)): # for each combination of agents
@@ -175,7 +175,7 @@ def get_test_results(test_timesteps = 400_000, n_intervals = 10, n_pairs = 30, r
                         agent.network = load_parameters(file)
                         agents.append(agent)
 
-                env = BertrandEnv(**env_args, timesteps = test_timesteps, random_state=int(seeds[pair_idx])) 
+                env = BertrandEnv(**env_args, timesteps = test_timesteps, random_state=int(seeds[pair_idx]), dim_actions=dim_actions) 
                 exp_name = f'{config}_{interval}_{pair_idx}'
 
                 # test agents and return metrics
