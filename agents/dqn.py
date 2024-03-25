@@ -44,7 +44,7 @@ class DQNAgent():
         self.t = 0
         self.random_state = random_state
         
-        self.epsilon_history = []
+        #self.epsilon_history = []
         
         # instantiate networks
         self.network = DQN(dim_states, dim_actions, hidden_size, random_state=random_state).to(self.device)
@@ -64,7 +64,7 @@ class DQNAgent():
         else:
             action = np.random.randint(0, self.dim_actions)
             
-        self.epsilon_history += [np.exp(-self.beta * self.t)]
+        #self.epsilon_history += [np.exp(-self.beta * self.t)]
             
         self.t += 1
                 

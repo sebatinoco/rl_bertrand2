@@ -48,19 +48,17 @@ if __name__ == '__main__':
     device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
     print(f'using {device}!')
     
+    if filter_env or filter_model or filter_config:
+        env_configs = [config for config in configs if len(set(filter_env) & set(config.split('_'))) > 0] or configs # filter by environment
+        model_configs = [config for config in configs if len(set(filter_model) & set(config.split('_'))) > 0] or configs # filter by env
+        filtered_configs = [config for config in configs if config in filter_config] or configs # filter by config
+        
+        final_configs = set(env_configs) & set(model_configs) & set(filtered_configs) # filtered configs
+        configs = [config for config in configs if config in final_configs] # filter configs
+        
+    print('Running experiments on the following configs: ', configs)
+
     if train_agents:
-        if filter_env or filter_model or filter_config:
-            env_configs = [config for config in configs if len(set(filter_env) & set(config.split('_'))) > 0] or configs # filter by environment
-            model_configs = [config for config in configs if len(set(filter_model) & set(config.split('_'))) > 0] or configs # filter by env
-            filtered_configs = [config for config in configs if config in filter_config] or configs # filter by config
-            
-            final_configs = set(env_configs) & set(model_configs) & set(filtered_configs) # filtered configs
-            configs = [config for config in configs if config in final_configs] # filter configs
-            
-        print('Running experiments on the following configs: ', configs)
-
-        failed_experiments = []
-
         # base seed
         np.random.seed(random_state)
         seeds = np.random.randint(0, 100_000, nb_experiments)
@@ -77,7 +75,7 @@ if __name__ == '__main__':
 
             for experiment_idx in range(1, nb_experiments + 1):
 
-                train_args['timesteps'] = 10_000
+                train_args['timesteps'] = 5000
 
                 # random seed
                 random_seed = int(seeds[experiment_idx - 1])
@@ -103,10 +101,10 @@ if __name__ == '__main__':
                 train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, debug=debug, robust=True, **train_args)
 
     if get_test:
-        get_test_results(random_state = random_state, n_pairs=1)
+        get_test_results(random_state = random_state, n_pairs=5, n_intervals = 3, test_timesteps=5000, configs = configs)
 
     print('getting results...')
-    get_robust_plots()
+    get_robust_plots(window_size = window_size)
     get_robust_tables(nb_experiments)
 
     print('exporting files...')

@@ -9,6 +9,9 @@ from tqdm import tqdm
 import yaml
 import os
 import itertools
+import sys
+import torch
+import io
 
 def get_intervals(n_intervals = None):
     
@@ -74,16 +77,20 @@ def get_pairs(n_pairs, n, random_state=None):
 
     return pairs
 
-def test_agents(env, agents, timesteps = 10_000):
+def test_agents(env, agents, timesteps = 400_000, exp_name = 'default', n_bins = 4):
+
+    '''
+    Executes experiment over a test environment. Stores the results on a .parquet file.
+    '''
 
     ob_t = env.reset()
     for timestep in range(timesteps):
-        
         actions = [agent.select_action(ob_t, greedy=True) for agent in agents] # select greedy actions
-        
         ob_t1, rewards, done, info = env.step(actions)
-        
         ob_t = ob_t1
+
+        log = f"\rExperiment: {exp_name} \t Episode completion: {100 * timestep/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
+        sys.stdout.write(log)
         
     delta_history = np.array(env.metric_history)[-timesteps:]
     nash_history = np.array(env.nash_history)[-timesteps:]
@@ -100,13 +107,45 @@ def test_agents(env, agents, timesteps = 10_000):
     for agent in range(env.N):
         results[f'actions_{agent}'] = actions_history[:, agent]
         results[f'prices_{agent}'] = prices_history[:, agent]
+
+    # export test metrics
+    results.to_parquet(f'metrics/test/{exp_name}.parquet')
+
+    bin_step = timesteps // n_bins
+
+    avg_delta = {str(i): np.mean(results['delta'].iloc[i-bin_step:i]) for i in range(bin_step, timesteps + 1, bin_step)}
+    std_delta = {str(i): np.std(results['delta'].iloc[i-bin_step:i]) for i in range(bin_step, timesteps + 1, bin_step)}
+    avg_actions = {str(i): np.mean(actions_history[i-bin_step:i]) for i in range(bin_step, timesteps + 1, bin_step)}
+    std_actions = {str(i): np.std(actions_history[i-bin_step:i]) for i in range(bin_step, timesteps + 1, bin_step)}
+
         
-    return np.mean(delta_history), np.std(delta_history), np.mean(actions_history), np.std(delta_history)
+    return avg_delta, std_delta, avg_actions, std_actions
 
-def get_test_results(test_timesteps = 50_000, n_intervals = None, n_pairs = 50, random_state = 3380):
+def load_parameters(file):
 
+    class CPU_Unpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if module == 'torch.storage' and name == '_load_from_bytes':
+                return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+            else: return super().find_class(module, name)
+
+    if torch.cuda.is_available():
+        parameters = pickle.load(file)
+    else:
+        parameters = CPU_Unpickler(file).load()
+
+    return parameters
+
+def get_test_results(test_timesteps = 400_000, n_intervals = None, n_pairs = 50, random_state = 3380, configs = get_configs(), n_bins = 4):
+
+    '''
+    Executes the experiment on test setting for a determined config and timestep. 
+    Stores the results as a .parquet.
+    '''
+
+    bin_step = test_timesteps // n_bins
     intervals = get_intervals(n_intervals = n_intervals) # timesteps of models
-    configs = get_configs() # configs 
+    configs = [config.replace('.yaml', '') for config in configs]
 
     for config in tqdm(configs): # for each config
         with open(f"configs/{config}.yaml", 'r') as file:
@@ -119,43 +158,52 @@ def get_test_results(test_timesteps = 50_000, n_intervals = None, n_pairs = 50, 
         np.random.seed(random_state)
         seeds = np.random.randint(0, 100_000, len(pairs))
         
-        avg_delta_curve, std_delta_curve = [], []
-        avg_actions_curve, std_actions_curve = [], []
+        avg_delta_curve = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)} 
+        std_delta_curve ={str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
+        avg_actions_curve = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
+        std_actions_curve = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
         for interval in intervals: # for each interval
-            avg_delta_list, std_delta_list = [], []
-            avg_actions_list, std_actions_list = [], []
+            avg_delta_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)} 
+            std_delta_metrics ={str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
+            avg_actions_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
+            std_actions_metrics = {str(i): [] for i in range(bin_step, test_timesteps + 1, bin_step)}
             for pair_idx in range(len(pairs)): # for each combination of agents
                 agents = []
                 for idx in pairs[pair_idx]: # load models
                     with open(f'models/{config}_{idx}_{interval}.pkl', 'rb') as file:
                         agent = DQNAgent(dim_states=dim_states, dim_actions=dim_actions)
-                        agent.network = pickle.load(file)
+                        agent.network = load_parameters(file)
                         agents.append(agent)
 
                 env = BertrandEnv(**env_args, timesteps = test_timesteps, random_state=int(seeds[pair_idx])) 
+                exp_name = f'{config}_{interval}_{pair_idx}'
 
                 # test agents and return metrics
-                avg_delta, std_delta, avg_actions, std_actions = test_agents(env, agents, timesteps = test_timesteps)
+                avg_delta, std_delta, avg_actions, std_actions = test_agents(env, agents, timesteps = test_timesteps, exp_name=exp_name)
 
                 # store metrics
-                avg_delta_list.append(avg_delta)
-                std_delta_list.append(std_delta)
-                avg_actions_list.append(avg_actions)
-                std_actions_list.append(std_actions)
+                for key in avg_delta_metrics.keys():
+                    avg_delta_metrics[key].append(avg_delta[key])
+                    std_delta_metrics[key].append(std_delta[key])
+                    avg_actions_metrics[key].append(avg_actions[key])
+                    std_actions_metrics[key].append(std_actions[key])
             
             # obtain aggregate statistics
-            avg_delta_curve.append(np.mean(avg_delta_list)) # average of average delta per timestep
-            std_delta_curve.append(np.std(avg_delta_list)) # std of average delta per timestep
-            avg_actions_curve.append(np.mean(avg_actions_list)) # average of average action per timestep
-            std_actions_curve.append(np.std(avg_actions_list)) # std of average action per timestep
+            for key in avg_delta_curve.keys():
+                avg_delta_curve[key].append(np.mean(avg_delta_metrics[key])) # average of average delta per timestep
+                std_delta_curve[key].append(np.std(avg_delta_metrics[key])) # std of average delta per timestep
+                avg_actions_curve[key].append(np.mean(avg_actions_metrics[key])) # average of average action per timestep
+                std_actions_curve[key].append(np.std(avg_actions_metrics[key])) # std of average action per timestep
 
         # export results of config
         results = pd.DataFrame({
-            'interval': intervals,
-            'avg_delta': avg_actions_curve,
-            'std_delta': std_delta_curve,
-            'avg_actions': avg_actions_curve,
-            'std_actions': std_actions_curve,
-            })
+        'interval': intervals,
+        })
 
-        results.to_parquet(f'metrics/test/{config}.parquet')
+        for key in avg_actions_curve.keys():
+            results[f'avg_delta_{key}'] = avg_delta_curve[key]
+            results[f'std_delta_{key}'] = std_delta_curve[key]
+            results[f'avg_actions_{key}'] = avg_actions_curve[key]
+            results[f'std_actions_{key}'] = std_actions_curve[key]
+
+        results.to_parquet(f'metrics/test/{config}_curve.parquet')

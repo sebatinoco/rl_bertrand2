@@ -73,45 +73,48 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
                     pickle.dump(agents[0].network, file)
             
             log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
-            try:
-                epsilon = np.mean(agent.epsilon_history[-1000:])
+            if debug:
+                epsilon = np.mean(env.epsilon_history[-1000:])
                 log += f"\t Epsilon: {epsilon:.2f}"
-            except:
-                pass
             sys.stdout.write(log)
             
             ob_t = ob_t1
         
         # store episode metrics
+            
+        if debug:
+            costs_history[episode] = np.array(env.costs_history)[-timesteps:]
+            quantities_history[episode] = np.array(env.quantities_history)[-timesteps:]
+            pi_N_history[episode] = np.array(env.pi_N_history)[-timesteps:]
+            pi_M_history[episode] = np.array(env.pi_M_history)[-timesteps:]
+            A_history[episode] = np.array(env.A_history)[-timesteps:]
+            rewards_history[episode] = np.array(env.rewards_history)[-timesteps:]
+            try:
+                epsilon_history[episode] = np.array(agent.epsilon_history)[-timesteps:]
+            except:
+                epsilon_history[episode] = np.zeros(timesteps)
+
         prices_history[episode] = np.array(env.prices_history)[-timesteps:]
         actions_history[episode] = np.array(env.action_history)[-timesteps:]
-        costs_history[episode] = np.array(env.costs_history)[-timesteps:]
+        delta_history[episode] = np.array(env.metric_history)[-timesteps:]
         monopoly_history[episode] = np.array(env.monopoly_history)[-timesteps:]
         nash_history[episode] = np.array(env.nash_history)[-timesteps:]
-        rewards_history[episode] = np.array(env.rewards_history)[-timesteps:]
-        delta_history[episode] = np.array(env.metric_history)[-timesteps:]
-        quantities_history[episode] = np.array(env.quantities_history)[-timesteps:]
-        pi_N_history[episode] = np.array(env.pi_N_history)[-timesteps:]
-        pi_M_history[episode] = np.array(env.pi_M_history)[-timesteps:]
-        A_history[episode] = np.array(env.A_history)[-timesteps:]
-        try:
-            epsilon_history[episode] = np.array(agent.epsilon_history)[-timesteps:]
-        except:
-            epsilon_history[episode] = np.zeros(timesteps)
-    
+
     # export   
+    if debug:
+        costs_history = np.mean(costs_history, axis = 0)
+        rewards_history = np.mean(rewards_history, axis = 0)
+        quantities_history = np.mean(quantities_history, axis = 0)
+        pi_N_history = np.mean(pi_N_history, axis = 0)
+        pi_M_history = np.mean(pi_M_history, axis = 0)
+        A_history = np.mean(A_history, axis = 0) # equal disposition to pay
+        epsilon_history = np.mean(epsilon_history, axis = 0)
+
     prices_history = np.mean(prices_history, axis = 0)
     actions_history = np.mean(actions_history, axis = 0)
-    costs_history = np.mean(costs_history, axis = 0)
     monopoly_history = np.mean(monopoly_history, axis = 0)
     nash_history = np.mean(nash_history, axis = 0)
-    rewards_history = np.mean(rewards_history, axis = 0)
     delta_history = np.mean(delta_history, axis = 0)
-    quantities_history = np.mean(quantities_history, axis = 0)
-    pi_N_history = np.mean(pi_N_history, axis = 0)
-    pi_M_history = np.mean(pi_M_history, axis = 0)
-    A_history = np.mean(A_history, axis = 0) # equal disposition to pay
-    epsilon_history = np.mean(epsilon_history, axis = 0)
         
     if debug:
         results = pd.DataFrame({'costs': costs_history,

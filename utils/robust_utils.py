@@ -161,6 +161,8 @@ def get_robust_plots(window_size = 1000, nb_experiments = 50):
             mean_actions = (result['actions_0'].apply(lambda x: act2prof[int(x)]) + result['actions_1'].apply(lambda x: act2prof[int(x)])) / 2
             avg_actions_tmp[:, idx] = get_rolling(mean_actions, window_size)
             std_actions_tmp[:, idx] = get_rolling_std(mean_actions, window_size)
+
+            del result  # Liberar memoria asociada al DataFrame
             
         avg_actions[config] = avg_actions_tmp
         std_actions[config] = std_actions_tmp
