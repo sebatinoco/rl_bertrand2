@@ -173,7 +173,6 @@ def get_robust_plots(window_size = 1000, nb_experiments = 50):
         grouped_configs = ['_'.join(config.split('_')[:-1]) for config in configs]
         grouped_configs = list(set(grouped_configs))
         grouped_configs.remove('bertrand_dqn')
-        grouped_configs.remove('bertrand_dqn_altruist')
         errorevery = int(0.01 * series_size)
 
     for config in grouped_configs:

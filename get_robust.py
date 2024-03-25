@@ -46,6 +46,9 @@ if __name__ == '__main__':
     get_test = r_args['get_test']
     debug = r_args['debug']
     export = r_args['export']
+    n_pairs = r_args['n_pairs']
+    n_intervals = r_args['n_intervals']
+    test_timesteps = r_args['test_timesteps']
     device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
     print(f'using {device}!')
     
@@ -102,7 +105,8 @@ if __name__ == '__main__':
                 train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, debug=debug, robust=True, **train_args)
 
     if get_test:
-        get_test_results(random_state = random_state, n_pairs=5, n_intervals = 3, test_timesteps=5000, configs = configs)
+        get_test_results(random_state = random_state, n_intervals = n_intervals, 
+                         n_pairs = n_pairs, test_timesteps = test_timesteps, configs = configs)
 
     print('getting results...')
     get_robust_plots(window_size = window_size)

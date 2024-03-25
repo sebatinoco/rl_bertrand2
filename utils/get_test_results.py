@@ -136,7 +136,7 @@ def load_parameters(file):
 
     return parameters
 
-def get_test_results(test_timesteps = 400_000, n_intervals = None, n_pairs = 50, random_state = 3380, configs = get_configs(), n_bins = 4):
+def get_test_results(test_timesteps = 400_000, n_intervals = 10, n_pairs = 30, random_state = 3380, configs = get_configs(), n_bins = 4):
 
     '''
     Executes the experiment on test setting for a determined config and timestep. 
