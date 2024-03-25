@@ -45,6 +45,7 @@ if __name__ == '__main__':
     random_state = r_args['random_state']
     get_test = r_args['get_test']
     debug = r_args['debug']
+    export = r_args['export']
     device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
     print(f'using {device}!')
     
@@ -107,9 +108,11 @@ if __name__ == '__main__':
     get_robust_plots(window_size = window_size)
     get_robust_tables(nb_experiments)
 
-    print('exporting files...')
-    # move to export folder
-    shutil.make_archive("export/metrics", "zip", "metrics")
-    shutil.make_archive("export/models", "zip", "models")
+
+    if export:
+        print('exporting files...')
+        # move to export folder
+        shutil.make_archive("export/metrics", "zip", "metrics")
+        shutil.make_archive("export/models", "zip", "models")
 
     print('done!')

@@ -11,7 +11,8 @@ def get_configs():
     
     configs = ['_'.join(metric.split('_')[:4]) if 
                     ('_'.join(metric.split('_')[:3]) != 'bertrand_dqn_base') and 
-                    ('_'.join(metric.split('_')[:3]) != 'bertrand_dqn_default') else 
+                    ('_'.join(metric.split('_')[:3]) != 'bertrand_dqn_default') and
+                    ('_'.join(metric.split('_')[:3]) != 'bertrand_dqn_altruist') else 
                     '_'.join(metric.split('_')[:3]) for metric in metrics]
     configs.remove('.gitignore')
     configs = list(set(configs))
@@ -80,7 +81,7 @@ def get_robust_tables(nb_experiments = 50):
     for config in configs:
         files = [metric.replace('.parquet', '') for metric in metrics if config in metric]
         files = sorted(files, key=lambda x: int(x.split('_')[-1])) # sort by experiment idx
-        assert len(files) == nb_experiments, f'error calculating sample of experiment {config}' # assert of nb of experiments
+        assert len(files) == nb_experiments, f'error calculating sample of experiment {config}: {len(files)} experiments' # assert of nb of experiments
         
         deltas = []
         for file in files:
@@ -172,6 +173,7 @@ def get_robust_plots(window_size = 1000, nb_experiments = 50):
         grouped_configs = ['_'.join(config.split('_')[:-1]) for config in configs]
         grouped_configs = list(set(grouped_configs))
         grouped_configs.remove('bertrand_dqn')
+        grouped_configs.remove('bertrand_dqn_altruist')
         errorevery = int(0.01 * series_size)
 
     for config in grouped_configs:
