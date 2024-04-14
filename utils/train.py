@@ -4,7 +4,7 @@ import pandas as pd
 import pickle
 
 def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation, 
-          deviate_start, deviate_end, test_size, exp_name = 'experiment', 
+          deviate_step, test_size, exp_name = 'experiment', 
           debug = False, robust = False, store_steps = 10_000):
 
     '''
@@ -34,18 +34,20 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
     pi_M_history = np.zeros((episodes, timesteps))
     A_history = np.zeros((episodes, timesteps))
     epsilon_history = np.zeros((episodes, timesteps))
+    forced_delta_history = np.zeros((episodes, timesteps))
+    w_history = np.zeros((episodes, timesteps))
+    IE_history = np.zeros((episodes, timesteps))
     
     for episode in range(episodes):
         ob_t = env.reset()
         update_agents = True
-        for t in range(timesteps):
+        for t in range(1, timesteps + 1):
             actions = [agent.select_action(ob_t) for agent in agents]    
             
             if variation == 'deviate':
-                if (t/timesteps > deviate_start) and (t/timesteps <= deviate_end):
+                if t == deviate_step:
                     env.trigger_deviation = True
-                
-                elif t/timesteps > deviate_end:
+                else:
                     env.trigger_deviation = False
             
             elif variation == 'altruist':
@@ -67,12 +69,12 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
                     sample = buffer.sample(agent_idx)
                     agent.update(*sample)
 
-            if t % store_steps == 0:
+            if (t % store_steps == 0) & (variation != 'deviate'):
                 # save agent
                 with open(f'models/{exp_name}_{t}.pkl', 'wb') as file:
                     pickle.dump(agents[0].network, file)
             
-            log = f"\rExperiment: {exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * t/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
+            log = f"\rExperiment: Train_{exp_name} \t Episode: {episode + 1}/{episodes} \t Episode completion: {100 * (t+1)/timesteps:.2f} % \t Delta: {info['avg_delta']:.2f} \t Std: {info['std_delta']:.2f}"
             if debug:
                 epsilon = np.mean(env.epsilon_history[-1000:])
                 log += f"\t Epsilon: {epsilon:.2f}"
@@ -81,9 +83,7 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
             ob_t = ob_t1
         
         # store episode metrics
-            
         if debug:
-            costs_history[episode] = np.array(env.costs_history)[-timesteps:]
             quantities_history[episode] = np.array(env.quantities_history)[-timesteps:]
             pi_N_history[episode] = np.array(env.pi_N_history)[-timesteps:]
             pi_M_history[episode] = np.array(env.pi_M_history)[-timesteps:]
@@ -99,10 +99,13 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
         delta_history[episode] = np.array(env.metric_history)[-timesteps:]
         monopoly_history[episode] = np.array(env.monopoly_history)[-timesteps:]
         nash_history[episode] = np.array(env.nash_history)[-timesteps:]
+        costs_history[episode] = np.array(env.costs_history)[-timesteps:]
+        forced_delta_history[episode] = np.array(env.forced_metric_history)[-timesteps:]
+        IE_history[episode] = np.array(env.IE_history)[-timesteps:]
+        w_history[episode] = np.array(env.w_history)[-timesteps:]
 
     # export   
     if debug:
-        costs_history = np.mean(costs_history, axis = 0)
         rewards_history = np.mean(rewards_history, axis = 0)
         quantities_history = np.mean(quantities_history, axis = 0)
         pi_N_history = np.mean(pi_N_history, axis = 0)
@@ -115,6 +118,10 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
     monopoly_history = np.mean(monopoly_history, axis = 0)
     nash_history = np.mean(nash_history, axis = 0)
     delta_history = np.mean(delta_history, axis = 0)
+    costs_history = np.mean(costs_history, axis = 0)
+    forced_delta_history = np.mean(forced_delta_history, axis = 0)
+    IE_history = np.mean(IE_history, axis = 0)
+    w_history = np.mean(w_history, axis = 0)
         
     if debug:
         results = pd.DataFrame({'costs': costs_history,
@@ -132,6 +139,10 @@ def train(env, agents, buffer, N, episodes, timesteps, update_steps, variation,
                                 'delta': delta_history,
                                 'p_nash': nash_history,
                                 'p_monopoly': monopoly_history,
+                                'costs': costs_history,
+                                'forced_delta': forced_delta_history,
+                                'inflation_effect': IE_history,
+                                'w': w_history,
                                 })
 
     for agent in range(env.N):

@@ -25,6 +25,5 @@ train: # train params
   episodes: 1
   timesteps: 400_000
   update_steps: 1
-  deviate_start: 0.85
-  deviate_end: 0.95
+  deviate_step: 350_000
   test_size: 0.33

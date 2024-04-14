@@ -10,8 +10,8 @@ from agents.ddpg import DDPGAgent
 from agents.sac import SACAgent
 from agents.dqn import DQNAgent
 
-from envs.BertrandInflation import BertrandEnv
-#from envs.BertrandInflation2 import BertrandEnv
+#from envs.BertrandInflation import BertrandEnv
+from envs.BertrandInflation2 import BertrandEnv
 from envs.LinearBertrandInflation import LinearBertrandEnv
 
 from replay_buffer import ReplayBuffer
@@ -24,7 +24,7 @@ from utils.get_table import get_tables
 from utils.train_test_seed_agents import train_test_seed_agents, plot_train_test
 from utils.plot_deviate import plot_deviate
 from utils.robust_utils import *
-from utils.get_test_results import get_test_results
+from utils.get_test_results import *
 
 models_dict = {'sac': SACAgent, 'ddpg': DDPGAgent, 'dqn': DQNAgent}
 envs_dict = {'bertrand': BertrandEnv, 'linear': LinearBertrandEnv}
@@ -59,13 +59,16 @@ if __name__ == '__main__':
         
         final_configs = set(env_configs) & set(model_configs) & set(filtered_configs) # filtered configs
         configs = [config for config in configs if config in final_configs] # filter configs
-        
+    
+    #if 'bertrand_dqn_deviate.yaml' in configs:
+    #    configs.remove('bertrand_dqn_deviate.yaml')
+
     print('Running experiments on the following configs: ', configs)
 
     if train_agents:
         # base seed
         np.random.seed(random_state)
-        seeds = np.random.randint(0, 100_000, nb_experiments)
+        seeds = np.random.randint(0, 100_000, nb_experiments) # 1 seed for each n° experiment
         for config in configs:
             # load config
             with open(f"configs/{config}", 'r') as file:
@@ -79,7 +82,7 @@ if __name__ == '__main__':
 
             for experiment_idx in range(1, nb_experiments + 1):
 
-                train_args['timesteps'] = 5000
+                train_args['timesteps'] = 2000
 
                 # random seed
                 random_seed = int(seeds[experiment_idx - 1])
@@ -105,12 +108,20 @@ if __name__ == '__main__':
                 train(env, agents, buffer, env.N, exp_name = exp_name, variation = variation, debug=debug, robust=True, **train_args)
 
     if get_test:
+        # create test metrics as .parquet
         get_test_results(random_state = random_state, n_intervals = n_intervals, 
-                         n_pairs = n_pairs, test_timesteps = test_timesteps, configs = configs)
+                         n_pairs = n_pairs, test_timesteps = test_timesteps, 
+                         configs = configs, device = device)
 
     print('getting results...')
+     # get test curve
+    get_test_metrics(test_timesteps = test_timesteps, n_pairs = n_pairs,
+                     n_intervals = n_intervals, n_bins = 1)
+    
+    get_test_tables(nb_experiments = n_pairs)
+    
     get_robust_plots(window_size = window_size)
-    get_robust_tables(nb_experiments)
+    get_train_tables(nb_experiments)
 
 
     if export:

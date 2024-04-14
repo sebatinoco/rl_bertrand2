@@ -153,7 +153,7 @@ class BertrandEnv():
         
         # gather observation
         inflation = np.array(inflation, ndmin = 2, dtype = 'float32')
-        cost = np.array(self.c_t, ndmin = 2, dtype = 'float32')
+        #cost = np.array(self.c_t, ndmin = 2, dtype = 'float32')
         past_prices = np.array(self.prices_history[-self.k:], dtype = 'float32')
         past_costs = np.array(self.costs_history[-self.k:], ndmin = 2, dtype = 'float32').T
         past_prices = (past_prices - past_costs) / past_costs
@@ -329,11 +329,11 @@ class BertrandEnv():
             #assert self.pi_M > self.pi_N, f'monopoly profits should be higher than nash profits: {self.pi_N} vs {self.pi_M}'
 
         if self.debug:
-            self.costs_history += [self.c_t]
             self.A_history += [self.A_t[0]]
             self.pi_N_history += [self.pi_N]
             self.pi_M_history += [self.pi_M]
 
+        self.costs_history += [self.c_t]
         self.nash_history += [self.pN]
         self.monopoly_history += [self.pM]
             
@@ -348,11 +348,9 @@ class BertrandEnv():
         if self.dim_actions > 1:
             # dict between 0.5 and delta
             self.prices_dict = np.linspace(self.action_range[0], self.action_range[1], self.dim_actions)
-            
             scaled_action = self.prices_dict[action] * self.c_t
         else:
             action = action * (self.action_range[1] - self.action_range[0]) / 2.0 + (self.action_range[1] + self.action_range[0]) / 2.0 # scale variations
-            
             scaled_action = action * self.c_t # variations over cost
         
         return np.max([scaled_action + self.c_t, 0.0])

@@ -18,8 +18,8 @@ def run_args():
     parser.add_argument('--debug', default = False, type=lambda x: bool(strtobool(x)), help = 'bool to debug training if wanted')
     parser.add_argument('--get_test', default = True, type=lambda x: bool(strtobool(x)), help = 'bool to get test results if wanted')
     parser.add_argument('--export', default = False, type=lambda x: bool(strtobool(x)), help = 'bool to export results if wanted')
-    parser.add_argument('--n_pairs', default = 30, type = int, help = 'number of experiments for each test timestep')
-    parser.add_argument('--n_intervals', default = 10, type = int, help = 'number of timesteps to test')
+    parser.add_argument('--n_pairs', default = 50, type = int, help = 'number of experiments for each test timestep')
+    parser.add_argument('--n_intervals', default = 5, type = int, help = 'number of timesteps to test')
     parser.add_argument('--test_timesteps', default = 400000, type = int, help = 'number of test timesteps')
     
     # consolidate args
